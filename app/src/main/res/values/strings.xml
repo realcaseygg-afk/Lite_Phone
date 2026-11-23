@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lite Phone</string>
+    <string name="guard_label">Lite Phone app blocker</string>
+    <string name="guard_description">Closes any app that is not on the Lite Phone allowed list. It only checks which app is open. Nothing on your screen is stored or sent anywhere.</string>
+</resources>
