@@ -68,9 +68,18 @@ object Policy {
         "com.google.android.deskclock",
     )
 
+    const val SETTINGS = "com.android.settings"
+
+    /**
+     * Settings pages showing any of this text are locked: everything about Lite
+     * Phone itself (app info, accessibility, Home app, device admin, battery
+     * sleep lists) and the developer options / build number used to turn on USB debugging.
+     */
+    val LOCKED_SETTINGS_TEXT = listOf("Lite Phone", "USB debugging", "Wireless debugging", "Build number")
+
     /** Apps where the allowed-apps screen shows a warning. */
     val RISKY = mapOf(
-        "com.android.settings" to "Lets anyone switch Lite Phone off",
+        SETTINGS to "Pages that could switch Lite Phone off stay locked",
         "com.sec.android.app.launcher" to "Lets anyone leave Lite Phone",
         "com.android.vending" to "Can install and uninstall apps",
         "com.sec.android.app.samsungapps" to "Can install and uninstall apps",
@@ -138,7 +147,7 @@ object Policy {
             Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA), PackageManager.MATCH_DEFAULT_ONLY
         )?.activityInfo?.packageName
 
-        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS).distinct()
+        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly

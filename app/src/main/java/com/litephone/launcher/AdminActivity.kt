@@ -50,7 +50,7 @@ class AdminActivity : Activity() {
         add("Protection checklist") {
             startActivity(Intent(this, SetupActivity::class.java))
         }
-        add("Open phone Settings (unlocks 15 min)") {
+        add("Unlock all of Settings for 15 minutes") {
             Policy.pauseAtLeast(this, 15 * 60_000L)
             startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }

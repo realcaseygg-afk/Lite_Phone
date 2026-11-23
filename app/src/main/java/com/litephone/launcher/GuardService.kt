@@ -21,7 +21,10 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
 
     private val handler = Handler(Looper.getMainLooper())
     private val recheck = Runnable { enforceCurrentApp() }
+    private val scanSettings = Runnable { checkSettingsPage() }
     private var lastToastAt = 0L
+    private var settingsBacks = 0
+    private var lastSettingsBlockAt = 0L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -51,10 +54,22 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event == null || event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        if (event == null) return
+        val type = event.eventType
+        if (type != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            type != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+        ) return
         val pkg = event.packageName?.toString() ?: return
         val cls = event.className?.toString()
         if (!Policy.isEnforcing(this)) return
+
+        // Settings is allowed, but the pages that could switch Lite Phone off are not.
+        if (pkg == Policy.SETTINGS && Policy.isAllowed(this, pkg, cls)) {
+            handler.removeCallbacks(scanSettings)
+            handler.postDelayed(scanSettings, 150)
+            return
+        }
+        if (type != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         if (Policy.isAllowed(this, pkg, cls)) return
         // Only act on real app screens, not small overlays or pop-ups.
         if (isActivity(pkg, cls) || activeAppPackage() == pkg) block(pkg)
@@ -64,6 +79,43 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
         if (!Policy.isEnforcing(this)) return
         val pkg = activeAppPackage() ?: return
         if (!Policy.isAllowed(this, pkg, null)) block(pkg)
+    }
+
+    /**
+     * Any Settings page showing Lite Phone (app info, accessibility, Home app,
+     * device admin, battery sleeping lists, search results...) or the developer
+     * options gets backed out of.
+     */
+    private fun checkSettingsPage() {
+        if (!Policy.isEnforcing(this)) return
+        val list = try {
+            windows
+        } catch (e: Exception) {
+            return
+        }
+        val locked = list.any { w ->
+            val root = w.root
+            w.type == AccessibilityWindowInfo.TYPE_APPLICATION && root != null &&
+                root.packageName?.toString() == Policy.SETTINGS &&
+                Policy.LOCKED_SETTINGS_TEXT.any { root.findAccessibilityNodeInfosByText(it).isNotEmpty() }
+        }
+        if (!locked) {
+            settingsBacks = 0
+            return
+        }
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastSettingsBlockAt > 5000) settingsBacks = 0
+        lastSettingsBlockAt = now
+        settingsBacks++
+        if (settingsBacks <= 3) {
+            performGlobalAction(GLOBAL_ACTION_BACK)
+        } else {
+            settingsBacks = 0
+            goHome()
+        }
+        toast("That part of Settings is locked")
+        handler.removeCallbacks(scanSettings)
+        handler.postDelayed(scanSettings, 600)
     }
 
     @Suppress("DEPRECATION")
@@ -93,6 +145,13 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
     }
 
     private fun block(pkg: String) {
+        goHome()
+        toast("${labelOf(pkg)} isn't allowed on Lite Phone")
+        // Some apps open a second screen right after the first; catch that too.
+        handler.postDelayed(recheck, 800)
+    }
+
+    private fun goHome() {
         if (Policy.isDefaultHome(this)) performGlobalAction(GLOBAL_ACTION_HOME)
         try {
             startActivity(
@@ -102,14 +161,14 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
                 )
             )
         } catch (e: Exception) { }
+    }
 
+    private fun toast(msg: String) {
         val now = SystemClock.elapsedRealtime()
         if (now - lastToastAt > 3000) {
             lastToastAt = now
-            Toast.makeText(this, "${labelOf(pkg)} isn't allowed on Lite Phone", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
-        // Some apps open a second screen right after the first; catch that too.
-        handler.postDelayed(recheck, 800)
     }
 
     private fun labelOf(pkg: String): String = try {

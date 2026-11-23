@@ -10,6 +10,7 @@ object Prefs {
     private const val FILE = "lite_phone"
     private const val KEY_ARMED = "armed"
     private const val KEY_ALLOWED = "allowed"
+    private const val KEY_SETTINGS_ADDED = "settings_added_v2"
 
     fun get(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -23,13 +24,18 @@ object Prefs {
 
     /** Allowed apps, in the order they appear on the home screen. */
     fun allowedList(ctx: Context): List<String> {
-        val saved = get(ctx).getString(KEY_ALLOWED, null)
-        if (saved == null) {
-            val defaults = Policy.defaultAllowedPackages(ctx)
-            setAllowedList(ctx, defaults)
-            return defaults
+        val sp = get(ctx)
+        val saved = sp.getString(KEY_ALLOWED, null)
+        var list = saved?.split(',')?.filter { it.isNotBlank() } ?: Policy.defaultAllowedPackages(ctx)
+        // Version 2 added Settings to the allowed apps; add it once for existing installs.
+        if (!sp.getBoolean(KEY_SETTINGS_ADDED, false)) {
+            if (Policy.SETTINGS !in list) list = list + Policy.SETTINGS
+            sp.edit().putBoolean(KEY_SETTINGS_ADDED, true).apply()
+            setAllowedList(ctx, list)
+        } else if (saved == null) {
+            setAllowedList(ctx, list)
         }
-        return saved.split(',').filter { it.isNotBlank() }
+        return list
     }
 
     fun setAllowedList(ctx: Context, packages: List<String>) {

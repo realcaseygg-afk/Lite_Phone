@@ -4,6 +4,8 @@ A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these 
 
 **Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook**
 
+**Settings** is allowed too, but any Settings page that could switch Lite Phone off is locked. That includes Lite Phone's app info, Accessibility, the Home app choice, device admin, battery sleep lists and developer options/USB debugging.
+
 Everything else gets closed straight away and you're sent back to the Lite Phone home screen. That covers every way of opening an app: notifications, links, Google Assistant or Bixby, edge panels and recent apps. Changing anything needs a passcode, and only the passcode holder knows it.
 
 ## What the passcode holder can do
@@ -12,7 +14,7 @@ Tap **Lite Phone 🔒** at the bottom of the home screen and enter the passcode 
 
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
 - **Choose allowed apps.** Add or remove apps, for example Gallery, Maps or Calendar.
-- **Open phone Settings.** This unlocks for 15 minutes. Settings is normally blocked because it could turn Lite Phone off.
+- **Unlock all of Settings for 15 minutes**, including the locked pages.
 - **Change the passcode.**
 - **Turn off Lite Phone** to remove it completely.
 
@@ -49,7 +51,7 @@ Lite Phone is a strong speed bump, but it isn't a vault. A normal launcher can't
 
 - **Safe mode.** Holding Power and then long-pressing *Power off* starts the phone without third-party apps. Lite Phone comes back after a normal restart.
 - **Factory reset** from the recovery menu, which erases the phone.
-- **A computer with USB debugging**, which needs Developer options turned on in Settings first. Settings is blocked.
+- **A computer with USB debugging**, which needs Developer options turned on first. Those Settings pages are locked.
 
 The only way to close those gaps is Android's "device owner" kiosk mode. That needs the phone wiped and set up from a computer.
 
