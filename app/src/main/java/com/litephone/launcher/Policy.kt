@@ -181,7 +181,7 @@ object Policy {
 
     /** Default category order on the home screen. */
     val CATEGORY_NAMES = listOf(
-        "Phone & Messages", "School", "AI", "Music & Books", "Camera & Photos",
+        "Phone & Messages", "School", "Sign-in & Security", "AI", "Music & Books", "Camera & Photos",
         "Banking & Money", "Food", "Shopping", "Everyday", OTHER,
     )
 
@@ -196,9 +196,9 @@ object Policy {
         put("AI", listOf("com.anthropic.claude", "com.openai.chatgpt"))
         put("Music & Books", listOf("com.spotify.music", "com.audible.application"))
         put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
+        put("Sign-in & Security", AUTHENTICATOR_APPS)
         put("School", listOf(
-            "com.instructure.candroid", "com.duosecurity.duomobile", "com.azure.authenticator",
-            "com.google.android.apps.authenticator2", "com.microsoft.teams", "us.zoom.videomeetings",
+            "com.instructure.candroid", "com.microsoft.teams", "us.zoom.videomeetings",
             "com.google.android.apps.classroom", "com.quizlet.quizletandroid", "com.mainichinote.app",
         ) + FILES_APPS)
         put("Banking & Money", BANKING_APPS + listOf("com.samsung.android.spay", "com.google.android.apps.walletnfcrefapp"))
@@ -234,10 +234,25 @@ object Policy {
         BANK_WORDS.containsMatchIn(app.label.lowercase()) ||
             app.pkg.contains("bank", ignoreCase = true) || app.pkg.contains("creditunion", ignoreCase = true)
 
+    val AUTHENTICATOR_APPS = listOf(
+        "com.duosecurity.duomobile",                    // Duo Mobile
+        "com.azure.authenticator",                      // Microsoft Authenticator
+        "com.google.android.apps.authenticator2",       // Google Authenticator
+        "com.authy.authy",                              // Twilio Authy
+        "com.okta.android.auth",                        // Okta Verify
+        "com.lastpass.authenticator",                   // LastPass Authenticator
+        "com.bitwarden.authenticator",                  // Bitwarden Authenticator
+        "com.twofasapp",                                // 2FAS
+        "com.beemdevelopment.aegis",                    // Aegis
+        "com.yubico.yubioath",                          // Yubico Authenticator
+        "com.symantec.mobile.idsafe",                   // Symantec VIP Access
+        "com.entrust.identityGuard.mobile",             // Entrust Identity
+    )
+
     class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 7
+    const val DEFAULTS_VERSION = 8
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -245,6 +260,7 @@ object Policy {
         DefaultsUpdate(5, BANKING_APPS + FOOD_APPS + SHOPPING_APPS, inMoreApps = true),
         DefaultsUpdate(6, listOf("com.google.android.gm"), inMoreApps = false),
         DefaultsUpdate(7, listOf("com.mainichinote.app"), inMoreApps = false),
+        DefaultsUpdate(8, AUTHENTICATOR_APPS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -377,7 +393,7 @@ object Policy {
         )?.activityInfo?.packageName
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
-            BANKING_APPS + FOOD_APPS + SHOPPING_APPS).distinct()
+            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly

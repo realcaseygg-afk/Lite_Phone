@@ -8,6 +8,7 @@ These are allowed too:
 
 - **Files and documents:** Microsoft 365, Word, Excel, PowerPoint, OneNote, OneDrive, Google Drive, Docs, Sheets, Slides, Adobe Acrobat
 - **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Samsung Wallet, Google Wallet
+- **Sign-in & Security:** Duo, Microsoft Authenticator, Google Authenticator, Authy, Okta Verify, LastPass Authenticator, Bitwarden Authenticator, 2FAS, Aegis, Yubico Authenticator, Symantec VIP Access and Entrust Identity
 - **Banking and money:** Chase, Bank of America, Wells Fargo, Capital One, Citi, U.S. Bank, PNC, Truist, Discover, Amex, Ally, SoFi, Chime, Navy Federal, USAA, TD, Citizens, Fifth Third, Regions, KeyBank, Huntington, Venmo, PayPal, Cash App, Zelle, Credit Karma, Rocket Money, Fidelity, Schwab and Vanguard. Any other installed bank or credit union app is listed under **Suggested** in the passcode holder's app picker.
 - **Food:** DoorDash, Uber Eats, Grubhub, Instacart, Starbucks, Chick-fil-A, McDonald's, Chipotle, Domino's, Pizza Hut, Papa John's, Taco Bell, Panera, Dunkin', Subway, Wendy's, Burger King, Kroger, Publix and Safeway
 - **Shopping:** Amazon, Walmart, Target, Costco, Sam's Club, eBay, Etsy, Best Buy, Home Depot, Lowe's, IKEA, Kohl's, Nike, CVS, Walgreens and Shop
@@ -21,7 +22,7 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 ## Home screen
 
-The home screen lists **categories**: Phone & Messages, School, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
+The home screen lists **categories**: Phone & Messages, School, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
 
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
