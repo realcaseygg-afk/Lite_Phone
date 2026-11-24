@@ -13,8 +13,6 @@ object Prefs {
     private const val KEY_DEFAULTS_VERSION = "defaults_version"
     private const val LEGACY_SETTINGS_ADDED = "settings_added_v2"
     private const val KEY_MORE = "more_apps"
-    private const val KEY_HOLDER_NAME = "holder_name"
-    private const val KEY_HOLDER_PHONE = "holder_phone"
 
     fun get(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -91,16 +89,6 @@ object Prefs {
         list[i] = b
         list[j] = a
         setAllowedList(ctx, list)
-    }
-
-    fun holderName(ctx: Context): String = get(ctx).getString(KEY_HOLDER_NAME, null) ?: ""
-    fun holderPhone(ctx: Context): String = get(ctx).getString(KEY_HOLDER_PHONE, null) ?: ""
-
-    fun setHolderContact(ctx: Context, name: String, phone: String) {
-        get(ctx).edit()
-            .putString(KEY_HOLDER_NAME, name.trim())
-            .putString(KEY_HOLDER_PHONE, phone.trim())
-            .apply()
     }
 }
 

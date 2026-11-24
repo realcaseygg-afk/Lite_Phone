@@ -19,7 +19,6 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
 - **Arrange:** long-press any app to reorder the home screen or move apps between Home and More apps. This doesn't need the passcode, because it can't change which apps are allowed.
-- **Ask to unlock** texts the passcode holder a request. If they agree, they text back a one-time code. Entering it unlocks all apps for the time they chose: 15 minutes, 30 minutes or 1 hour.
 - **Customize:** long-press the clock, or go through Arrange, to change the look:
   - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable
   - **Accent colour**
@@ -35,11 +34,10 @@ Tap **🔒 Passcode** at the bottom of the home screen and enter the passcode to
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
 - **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
 - **Unlock all of Settings for 15 minutes**, including the locked pages.
-- **Texting unlock codes:** set the name and number that "Ask to unlock" texts, choose how long each code unlocks for, and make a set of 10 one-time codes. Codes are shown once, so write them down or photograph them with another phone. Only hashes are stored.
 - **Change the passcode.**
 - **Turn off Lite Phone** to remove it completely.
 
-After 5 wrong tries of the passcode or a texted code, entry locks for 30 seconds. Each further wrong try doubles the wait, up to 1 hour.
+After 5 wrong passcode tries, entry locks for 30 seconds. Each further wrong try doubles the wait, up to 1 hour.
 
 These always keep working: calls (including emergency calls), emergency alerts, the keyboard, contacts, alarms, permission pop-ups, Google sign-in, photo and file pickers, and the notification shade and quick settings.
 
@@ -90,7 +88,6 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Passcode` | Stores only a salted PBKDF2 hash of the passcode, with lockout after wrong tries |
 | `Policy` | The allow list, plus the system parts that must never be blocked |
 | `BadgeService` | Notification listener that only counts notifications per app for the home screen badges |
-| `UnlockCodes` | One-time texted codes, stored as salted SHA-256 hashes |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 

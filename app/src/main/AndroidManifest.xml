@@ -51,16 +51,6 @@
             android:excludeFromRecents="true"
             android:exported="false" />
         <activity
-            android:name=".RequestUnlockActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".UnlockCodesActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
             android:name=".MoreAppsActivity"
             android:excludeFromRecents="true"
             android:exported="false" />

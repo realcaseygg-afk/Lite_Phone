@@ -43,7 +43,6 @@ object Passcode {
         return ok
     }
 
-    /** Wrong passcodes and wrong texted unlock codes share one lockout. */
     fun recordAttempt(ctx: Context, ok: Boolean) {
         val sp = Prefs.get(ctx)
         if (ok) {

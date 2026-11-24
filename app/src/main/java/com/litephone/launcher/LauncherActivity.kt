@@ -77,9 +77,6 @@ class LauncherActivity : Activity() {
         bottomBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             fun weight() = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            addView(bottomLink("Ask to unlock") {
-                startActivity(Intent(this@LauncherActivity, RequestUnlockActivity::class.java))
-            }, weight())
             addView(bottomLink("My use") {
                 startActivity(Intent(this@LauncherActivity, UsageActivity::class.java))
             }, weight())
