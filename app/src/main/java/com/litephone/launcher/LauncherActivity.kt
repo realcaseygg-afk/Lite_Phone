@@ -115,12 +115,16 @@ class LauncherActivity : Activity() {
             return
         }
         val grey = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+        // Slightly smaller rows once the list gets long, so more fit on screen.
+        val compact = apps.size > 8
+        val rowPad = Ui.dp(this, if (compact) 9 else 12)
+        val iconSize = Ui.dp(this, if (compact) 34 else 40)
+        val textSize = if (compact) 22f else 26f
         for (app in apps) {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                val p = Ui.dp(this@LauncherActivity, 12)
-                setPadding(0, p, 0, p)
+                setPadding(0, rowPad, 0, rowPad)
                 isClickable = true
                 setOnClickListener {
                     try {
@@ -130,12 +134,12 @@ class LauncherActivity : Activity() {
                     }
                 }
             }
-            val size = Ui.dp(this, 40)
+            val size = iconSize
             row.addView(ImageView(this).apply {
                 setImageDrawable(app.icon)
                 colorFilter = grey
             }, LinearLayout.LayoutParams(size, size))
-            row.addView(Ui.text(this, app.label, 26f).apply {
+            row.addView(Ui.text(this, app.label, textSize).apply {
                 setPadding(Ui.dp(this@LauncherActivity, 20), 0, 0, 0)
             })
             appList.addView(row)

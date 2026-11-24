@@ -2,7 +2,9 @@
 
 A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these apps open:
 
-**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook**
+**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Canvas · Duo Mobile**
+
+Apps on this list that aren't installed yet appear on the home screen as soon as they're installed.
 
 **Settings** is allowed too, but any Settings page that could switch Lite Phone off is locked. That includes Lite Phone's app info, Accessibility, the Home app choice, device admin, battery sleep lists and developer options/USB debugging.
 
@@ -13,7 +15,7 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 Tap **Lite Phone 🔒** at the bottom of the home screen and enter the passcode to:
 
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
-- **Choose allowed apps.** Add or remove apps, for example Gallery, Maps or Calendar.
+- **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
 - **Unlock all of Settings for 15 minutes**, including the locked pages.
 - **Change the passcode.**
 - **Turn off Lite Phone** to remove it completely.

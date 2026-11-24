@@ -29,6 +29,8 @@ object Policy {
         "com.anthropic.claude",            // Claude
         "com.openai.chatgpt",              // ChatGPT
         "com.microsoft.office.outlook",    // Outlook
+        "com.instructure.candroid",        // Canvas Student
+        "com.duosecurity.duomobile",       // Duo Mobile
     )
 
     /**
@@ -69,6 +71,47 @@ object Policy {
     )
 
     const val SETTINGS = "com.android.settings"
+
+    /** Bump when adding to the defaults; existing installs get the new apps once. */
+    const val DEFAULTS_VERSION = 3
+    val ADDED_IN_VERSION = listOf(
+        2 to listOf(SETTINGS),
+        3 to listOf("com.instructure.candroid", "com.duosecurity.duomobile"),
+    )
+
+    class Suggestion(val pkg: String, val group: String, val why: String)
+
+    /** Shown (if installed) at the top of the allowed-apps screen for one-tap adding. */
+    val SUGGESTED = listOf(
+        Suggestion("com.azure.authenticator", "School", "Sign-in codes for Microsoft school accounts"),
+        Suggestion("com.google.android.apps.authenticator2", "School", "Sign-in codes"),
+        Suggestion("com.microsoft.teams", "School", "Class chats and meetings"),
+        Suggestion("us.zoom.videomeetings", "School", "Online classes and office hours"),
+        Suggestion("com.google.android.apps.classroom", "School", "Assignments"),
+        Suggestion("com.microsoft.office.officehubrow", "School", "Word, Excel and PowerPoint in one app"),
+        Suggestion("com.microsoft.office.word", "School", "Papers"),
+        Suggestion("com.microsoft.office.excel", "School", "Spreadsheets"),
+        Suggestion("com.microsoft.office.powerpoint", "School", "Slides"),
+        Suggestion("com.microsoft.office.onenote", "School", "Notes"),
+        Suggestion("com.microsoft.skydrive", "School", "School files"),
+        Suggestion("com.google.android.apps.docs", "School", "School files"),
+        Suggestion("com.google.android.apps.docs.editors.docs", "School", "Papers"),
+        Suggestion("com.google.android.apps.docs.editors.sheets", "School", "Spreadsheets"),
+        Suggestion("com.google.android.apps.docs.editors.slides", "School", "Slides"),
+        Suggestion("com.adobe.reader", "School", "Readings and PDFs"),
+        Suggestion("com.quizlet.quizletandroid", "School", "Studying"),
+        Suggestion("com.google.android.gm", "School", "School email (if your school uses Gmail)"),
+        Suggestion("com.samsung.android.calendar", "Everyday", "Class schedule"),
+        Suggestion("com.google.android.calendar", "Everyday", "Class schedule"),
+        Suggestion("com.samsung.android.app.notes", "Everyday", "Quick notes"),
+        Suggestion("com.sec.android.app.popupcalculator", "Everyday", "Calculator"),
+        Suggestion("com.sec.android.gallery3d", "Everyday", "See photos you take (camera preview opens this)"),
+        Suggestion("com.sec.android.app.myfiles", "Everyday", "Downloads and attachments"),
+        Suggestion("com.sec.android.app.clockpackage", "Everyday", "Set alarms and timers (alarms ring either way)"),
+        Suggestion("com.google.android.apps.maps", "Everyday", "Getting around"),
+        Suggestion("com.samsung.android.spay", "Everyday", "Tap to pay and student ID cards"),
+        Suggestion("com.google.android.apps.walletnfcrefapp", "Everyday", "Tap to pay and student ID cards"),
+    )
 
     /**
      * Settings pages showing any of this text are locked: everything about Lite

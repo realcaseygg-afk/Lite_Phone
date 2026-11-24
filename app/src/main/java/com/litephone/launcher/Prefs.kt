@@ -10,7 +10,8 @@ object Prefs {
     private const val FILE = "lite_phone"
     private const val KEY_ARMED = "armed"
     private const val KEY_ALLOWED = "allowed"
-    private const val KEY_SETTINGS_ADDED = "settings_added_v2"
+    private const val KEY_DEFAULTS_VERSION = "defaults_version"
+    private const val LEGACY_SETTINGS_ADDED = "settings_added_v2"
 
     fun get(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -26,14 +27,26 @@ object Prefs {
     fun allowedList(ctx: Context): List<String> {
         val sp = get(ctx)
         val saved = sp.getString(KEY_ALLOWED, null)
-        var list = saved?.split(',')?.filter { it.isNotBlank() } ?: Policy.defaultAllowedPackages(ctx)
-        // Version 2 added Settings to the allowed apps; add it once for existing installs.
-        if (!sp.getBoolean(KEY_SETTINGS_ADDED, false)) {
-            if (Policy.SETTINGS !in list) list = list + Policy.SETTINGS
-            sp.edit().putBoolean(KEY_SETTINGS_ADDED, true).apply()
-            setAllowedList(ctx, list)
-        } else if (saved == null) {
-            setAllowedList(ctx, list)
+        if (saved == null) {
+            val defaults = Policy.defaultAllowedPackages(ctx)
+            sp.edit()
+                .putString(KEY_ALLOWED, defaults.joinToString(","))
+                .putInt(KEY_DEFAULTS_VERSION, Policy.DEFAULTS_VERSION)
+                .apply()
+            return defaults
+        }
+        var list = saved.split(',').filter { it.isNotBlank() }
+        // Apps added to the defaults in later versions get added once to existing installs.
+        val legacy = if (sp.getBoolean(LEGACY_SETTINGS_ADDED, false)) 2 else 1
+        val version = sp.getInt(KEY_DEFAULTS_VERSION, legacy)
+        if (version < Policy.DEFAULTS_VERSION) {
+            for ((v, pkgs) in Policy.ADDED_IN_VERSION) {
+                if (v > version) list = list + pkgs.filter { it !in list }
+            }
+            sp.edit()
+                .putString(KEY_ALLOWED, list.joinToString(","))
+                .putInt(KEY_DEFAULTS_VERSION, Policy.DEFAULTS_VERSION)
+                .apply()
         }
         return list
     }
