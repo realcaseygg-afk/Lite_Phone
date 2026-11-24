@@ -216,7 +216,7 @@ class LauncherActivity : Activity() {
 
     private fun refreshApps() {
         appList.removeAllViews()
-        val arrangeApps = { startActivity(Intent(this, ArrangeActivity::class.java)) }
+        val arrangeApps = { ArrangeActivity.openCategories(this) }
         if (search.text.isNotBlank()) {
             val results = searchResults()
             if (results.isEmpty()) {
@@ -230,7 +230,7 @@ class LauncherActivity : Activity() {
             appList.addView(Ui.text(this, "No apps yet. Ask the passcode holder to add some.", 18f, Ui.MUTED))
             return
         }
-        val arrange = { startActivity(Intent(this, ArrangeActivity::class.java)) }
+        val arrange = { ArrangeActivity.openCategories(this) }
         for (cat in categories) {
             appList.addView(categoryRow(cat) {
                 startActivity(Intent(this, CategoryActivity::class.java).putExtra(CategoryActivity.EXTRA_NAME, cat.name))

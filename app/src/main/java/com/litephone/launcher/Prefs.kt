@@ -80,9 +80,28 @@ object Prefs {
     private const val KEY_CATEGORY_ORDER = "category_order"
     private const val CATEGORY_PREFIX = "category:"
 
+    private const val KEY_CUSTOM_CATEGORIES = "custom_categories"
+
+    /** Categories the user made with "New category". */
+    fun customCategories(ctx: Context): List<String> =
+        (get(ctx).getString(KEY_CUSTOM_CATEGORIES, null) ?: "").split(',').filter { it.isNotBlank() }
+
+    /** Adds a category and returns its cleaned-up name (or null if blank). */
+    fun addCustomCategory(ctx: Context, name: String): String? {
+        val clean = name.replace(',', ' ').trim().take(30)
+        if (clean.isEmpty()) return null
+        if (clean in allCategoryNames(ctx)) return clean
+        get(ctx).edit().putString(KEY_CUSTOM_CATEGORIES, (customCategories(ctx) + clean).joinToString(",")).apply()
+        return clean
+    }
+
+    /** Built-in categories plus the user's own, with Other last. */
+    fun allCategoryNames(ctx: Context): List<String> =
+        (Policy.CATEGORY_NAMES.filter { it != Policy.OTHER } + customCategories(ctx) + Policy.OTHER).distinct()
+
     /** Category the user moved this app into, if any. */
     fun categoryOverride(ctx: Context, pkg: String): String? =
-        get(ctx).getString(CATEGORY_PREFIX + pkg, null)?.takeIf { it in Policy.CATEGORY_NAMES }
+        get(ctx).getString(CATEGORY_PREFIX + pkg, null)?.takeIf { it in allCategoryNames(ctx) }
 
     fun setCategory(ctx: Context, pkg: String, category: String) {
         get(ctx).edit().putString(CATEGORY_PREFIX + pkg, category).apply()
@@ -90,33 +109,35 @@ object Prefs {
 
     /** All category names in the order shown on the home screen. */
     fun categoryOrder(ctx: Context): List<String> {
-        val saved = (get(ctx).getString(KEY_CATEGORY_ORDER, null) ?: "")
-            .split(',').filter { it in Policy.CATEGORY_NAMES }
-        return (saved + Policy.CATEGORY_NAMES).distinct()
+        val all = allCategoryNames(ctx)
+        val saved = (get(ctx).getString(KEY_CATEGORY_ORDER, null) ?: "").split(',').filter { it in all }
+        return (saved + all).distinct()
     }
 
-    fun moveCategory(ctx: Context, name: String, up: Boolean, visible: List<String>) {
-        val i = visible.indexOf(name)
-        val j = if (up) i - 1 else i + 1
-        if (i < 0 || j !in visible.indices) return
-        val order = categoryOrder(ctx).toMutableList()
-        val a = order.indexOf(name)
-        val b = order.indexOf(visible[j])
-        order[a] = visible[j]
-        order[b] = name
+    /**
+     * Saves a new order for the categories shown on screen. Hidden (empty)
+     * categories keep their places.
+     */
+    fun setVisibleCategoryOrder(ctx: Context, visible: List<String>) {
+        val order = fillSlots(categoryOrder(ctx), visible)
         get(ctx).edit().putString(KEY_CATEGORY_ORDER, order.joinToString(",")).apply()
     }
 
-    /** Swaps two apps' places in the home screen order. */
-    fun swap(ctx: Context, a: String, b: String) {
-        val list = allowedList(ctx).toMutableList()
-        val i = list.indexOf(a)
-        val j = list.indexOf(b)
-        if (i < 0 || j < 0) return
-        list[i] = b
-        list[j] = a
-        setAllowedList(ctx, list)
+    /** Saves a new order for some apps (one category's), keeping everyone else in place. */
+    fun reorderApps(ctx: Context, newOrder: List<String>) {
+        setAllowedList(ctx, fillSlots(allowedList(ctx), newOrder))
     }
+
+    /** Puts [newOrder] into the positions its items already occupy in [list]. */
+    private fun fillSlots(list: List<String>, newOrder: List<String>): List<String> {
+        val members = newOrder.toSet()
+        val out = list.toMutableList()
+        val slots = out.indices.filter { out[it] in members }
+        if (slots.size != newOrder.size) return list
+        slots.forEachIndexed { k, i -> out[i] = newOrder[k] }
+        return out
+    }
+
 }
 
 /**

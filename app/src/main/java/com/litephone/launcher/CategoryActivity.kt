@@ -31,10 +31,13 @@ class CategoryActivity : Activity() {
             setPadding(p, p, p, p)
         }
         c.addView(Ui.text(this, name, 28f, bold = true).apply { typeface = Look.typeface(this@CategoryActivity) })
-        val arrange = { startActivity(Intent(this, ArrangeActivity::class.java)) }
+        val arrange = { ArrangeActivity.openCategory(this, name) }
         if (apps.isEmpty()) c.addView(Ui.text(this, "Nothing here.", 16f, Ui.MUTED), Ui.lp(this, 12))
         for (app in apps) c.addView(AppRow.build(this, app, compact = false, onLongClick = arrange), Ui.lp(this))
-        c.addView(Ui.button(this, "Back", Ui.BG, Ui.MUTED) { finish() }, Ui.lp(this, 24))
+        if (apps.isNotEmpty()) {
+            c.addView(Ui.button(this, "Arrange these apps", Ui.SURFACE, Ui.ACCENT) { arrange() }, Ui.lp(this, 24))
+        }
+        c.addView(Ui.button(this, "Back", Ui.BG, Ui.MUTED) { finish() }, Ui.lp(this, 12))
         Ui.showScrolling(this, c)
     }
 }

@@ -29,7 +29,7 @@ The home screen lists **categories**: Phone & Messages, School, Notes & Tasks, S
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
 - **Quiet notifications:** notifications from **food apps are always cleared**, even during an unlock. Notifications from blocked apps are cleared automatically too, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. Clearing blocked apps is paused during an unlock. Both use the same notification access as the count bubbles.
 - **Count bubbles** show only missed calls and unread texts. They appear on the Phone and Messages apps and on their category. Turn this on once in the protection checklist.
-- **Arrange:** long-press a category or an app to reorder categories, reorder apps within a category, or move an app to a different category. This doesn't need the passcode, because it can't change which apps are allowed.
+- **Arrange** (⚙ Settings → Arrange, or long-press a category or app): drag the **≡** handle to reorder categories. Tap a category to drag its apps into order, and use **Move** to put an app in another category, or in a **new category** you name. The list scrolls by itself when you drag near the edge. This doesn't need the passcode, because it can't change which apps are allowed.
 - **⚙ Settings** (bottom of the home screen) has My use, Customize look, Arrange, Updates and, behind the passcode, **Add or remove apps** and the **passcode menu**.
 - **Customize:** long-press the clock, or use ⚙ Settings, to change the look:
   - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable
@@ -115,6 +115,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `BadgeService` | Notification listener that counts notifications per app for the badges and clears notifications from blocked apps |
 | `Updater`, `UpdateActivity` | Updates Lite Phone and the apps in `my-apps.json`: downloads or opens an APK, checks the package, signing key and version, then installs it |
 | `WebPass` | Time-limited browser access: tracks the daily count and which apps are browsers |
+| `ReorderList`, `ArrangeActivity` | Drag-and-drop ordering of categories and apps, moving apps between categories, and custom categories |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
