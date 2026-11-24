@@ -23,24 +23,26 @@ android {
         buildConfig = true
     }
 
-    // One fixed key so new builds install as updates over old ones.
-    // It only identifies this personal, sideloaded app; it is not a store key.
+    // Release builds are signed with Lite Phone's private key, which lives only in
+    // GitHub secrets (never in this repo). The phone only accepts updates signed
+    // with it. Builds without the key come out unsigned.
+    val keystoreFile = System.getenv("LITEPHONE_KEYSTORE_FILE")
+    val keystorePassword = System.getenv("LITEPHONE_KEYSTORE_PASSWORD")
     signingConfigs {
-        create("litephone") {
-            storeFile = rootProject.file("keystore/litephone-signing.jks")
-            storePassword = "android"
-            keyAlias = "litephone"
-            keyPassword = "android"
+        if (!keystoreFile.isNullOrBlank() && !keystorePassword.isNullOrBlank()) {
+            create("litephone") {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                keyAlias = "litephone"
+                keyPassword = keystorePassword
+            }
         }
     }
 
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("litephone")
-        }
-        getByName("debug") {
-            signingConfig = signingConfigs.getByName("litephone")
+            signingConfigs.findByName("litephone")?.let { signingConfig = it }
         }
     }
 

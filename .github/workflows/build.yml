@@ -20,7 +20,21 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Load signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.LITEPHONE_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.LITEPHONE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Signing key missing. Add the LITEPHONE_KEYSTORE and LITEPHONE_KEYSTORE_PASSWORD repository secrets (see README)."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/litephone.jks"
+          echo "LITEPHONE_KEYSTORE_FILE=$RUNNER_TEMP/litephone.jks" >> "$GITHUB_ENV"
+
       - name: Build
+        env:
+          LITEPHONE_KEYSTORE_PASSWORD: ${{ secrets.LITEPHONE_KEYSTORE_PASSWORD }}
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Rename APK

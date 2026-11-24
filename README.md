@@ -111,4 +111,6 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
-Building yourself: `./gradlew assembleRelease` with the Android SDK installed. GitHub Actions does this automatically (`.github/workflows/build.yml`). The signing key in `keystore/` is only there so each new build installs as an update over the last one. It isn't a Play Store key.
+Building yourself: `./gradlew assembleRelease` with the Android SDK installed. GitHub Actions does this automatically (`.github/workflows/build.yml`).
+
+**Signing key:** release builds are signed with Lite Phone's private key, which is stored only in two GitHub Actions secrets, `LITEPHONE_KEYSTORE` (the keystore, base64-encoded) and `LITEPHONE_KEYSTORE_PASSWORD`. It is never stored in the repo. The phone only accepts updates signed with that key, so keep a private backup of it. Without the secrets, the build stops with an error instead of publishing an APK the phone would reject.
