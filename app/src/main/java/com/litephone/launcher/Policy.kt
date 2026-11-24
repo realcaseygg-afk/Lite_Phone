@@ -33,6 +33,7 @@ object Policy {
         "com.duosecurity.duomobile",       // Duo Mobile
         "com.google.android.gm",           // Gmail
         "com.mainichinote.app",            // 毎日ノート (personal Japanese notebook)
+        "com.amazon.kindle",               // Kindle
     )
 
     /**
@@ -197,7 +198,7 @@ object Policy {
             "com.samsung.android.app.contacts", "com.google.android.contacts", "com.android.contacts",
         ))
         put("AI", listOf("com.anthropic.claude", "com.openai.chatgpt"))
-        put("Music & Books", listOf("com.spotify.music", "com.audible.application"))
+        put("Music & Books", listOf("com.spotify.music", "com.audible.application", "com.amazon.kindle"))
         put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
         put("Sign-in & Security", AUTHENTICATOR_APPS + PASSWORD_MANAGERS)
         put("Notes & Tasks", NOTES_APPS)
@@ -305,7 +306,7 @@ object Policy {
     )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 11
+    const val DEFAULTS_VERSION = 12
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -319,6 +320,7 @@ object Policy {
         // Samsung Wallet isn't used (Google Wallet is); blocking it also stops its swipe-up.
         DefaultsUpdate(11, listOf("com.google.android.apps.walletnfcrefapp"), inMoreApps = false,
             removed = listOf("com.samsung.android.spay")),
+        DefaultsUpdate(12, listOf("com.amazon.kindle"), inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)

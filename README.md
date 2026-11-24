@@ -2,7 +2,7 @@
 
 A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these apps open:
 
-**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · 毎日ノート (Japanese notebook)**
+**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · 毎日ノート (Japanese notebook) · Kindle**
 
 These are allowed too:
 
