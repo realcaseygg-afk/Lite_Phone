@@ -25,8 +25,8 @@ The home screen lists **categories**: Phone & Messages, School, AI, Music & Book
 
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
 - **Arrange:** long-press a category or an app to reorder categories, reorder apps within a category, or move an app to a different category. This doesn't need the passcode, because it can't change which apps are allowed.
-- **Options** (bottom of the home screen) opens Customize, Arrange, My use and Updates.
-- **Customize:** long-press the clock, or use Options, to change the look:
+- **⚙ Settings** (bottom of the home screen) has My use, Customize look, Arrange, Updates and, behind the passcode, **Add or remove apps** and the **passcode menu**.
+- **Customize:** long-press the clock, or use ⚙ Settings, to change the look:
   - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable
   - **Accent colour**
   - **Icons:** grey, colour or none
@@ -36,7 +36,7 @@ The home screen lists **categories**: Phone & Messages, School, AI, Music & Book
 
 ## What the passcode holder can do
 
-Tap **🔒 Passcode** at the bottom of the home screen and enter the passcode to:
+Open **⚙ Settings → 🔒 Passcode menu** and enter the passcode to:
 
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
 - **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
@@ -69,13 +69,13 @@ The setup screen walks through each step and shows a ✓ when it's done:
 6. *(Optional)* **Turn on usage tracking:** allow Lite Phone usage data access, for My use.
 7. Tap **Finish and lock**.
 
-The optional steps can be done later from **Passcode → Protection checklist**.
+The optional steps can be done later from **⚙ Settings → 🔒 Passcode menu → Protection checklist**.
 
 ## Updating
 
 Every push to this repo builds a new `LitePhone.apk` on the Releases page.
 
-**Without the passcode:** go to **Options → Updates**. This needs the passcode holder to tick *Allow Lite Phone to update itself* in the protection checklist once.
+**Without the passcode:** go to **⚙ Settings → Updates**. This needs the passcode holder to tick *Allow Lite Phone to update itself* in the protection checklist once.
 
 - **Check for updates** downloads the latest release and installs it. This only works if this GitHub repo is **public**, because a private repo's downloads need a GitHub login.
 - **Install from a file** takes a `LitePhone.apk` you've saved to Google Drive, OneDrive, email or Downloads.
@@ -93,7 +93,7 @@ Lite Phone is a strong speed bump, but it isn't a vault. A normal launcher can't
 - **Safe mode.** Holding Power and then long-pressing *Power off* starts the phone without third-party apps. Lite Phone comes back after a normal restart.
 - **Factory reset** from the recovery menu, which erases the phone.
 - **A computer with USB debugging**, which needs Developer options turned on first. Those Settings pages are locked.
-- **Self-updates.** Whoever controls this GitHub repo could publish a build with the lock removed, and Options → Updates would install it. The passcode menu shows the installed version and date, so a change is visible.
+- **Self-updates.** Whoever controls this GitHub repo could publish a build with the lock removed, and ⚙ Settings → Updates would install it. The passcode menu shows the installed version and date, so a change is visible.
 
 The only way to close those gaps is Android's "device owner" kiosk mode. That needs the phone wiped and set up from a computer.
 

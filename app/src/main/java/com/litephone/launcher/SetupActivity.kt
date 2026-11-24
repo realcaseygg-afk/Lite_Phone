@@ -120,7 +120,7 @@ class SetupActivity : Activity() {
         step(
             c, n++, "Allow Lite Phone to update itself (optional)",
             "On the next screen, switch on \"Allow from this source\". Then updates can be installed from " +
-                "Options \u2192 Updates without unlocking. Only genuine Lite Phone updates are accepted.",
+                "Settings (bottom of the home screen) \u2192 Updates without unlocking. Only genuine Lite Phone updates are accepted.",
             Updater.canInstall(this), "Allow updates"
         ) {
             openSettings(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))

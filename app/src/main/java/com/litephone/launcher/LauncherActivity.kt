@@ -78,14 +78,8 @@ class LauncherActivity : Activity() {
         bottomBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             fun weight() = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            addView(bottomLink("My use") {
-                startActivity(Intent(this@LauncherActivity, UsageActivity::class.java))
-            }, weight())
-            addView(bottomLink("Options") {
+            addView(bottomLink("\u2699 Settings") {
                 startActivity(Intent(this@LauncherActivity, OptionsActivity::class.java))
-            }, weight())
-            addView(bottomLink("\uD83D\uDD12 Passcode") {
-                PinActivity.openAdmin(this@LauncherActivity)
             }, weight())
         }
 

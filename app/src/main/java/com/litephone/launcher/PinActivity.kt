@@ -19,10 +19,19 @@ class PinActivity : Activity() {
         private const val EXTRA_MODE = "mode"
         private const val MODE_CREATE = "create"
         private const val MODE_VERIFY = "verify"
+        private const val EXTRA_NEXT = "next"
+        private const val NEXT_APPS = "apps"
 
         /** Ask for the passcode, then open the passcode-holder screen. */
         fun openAdmin(ctx: Context) {
             ctx.startActivity(Intent(ctx, PinActivity::class.java).putExtra(EXTRA_MODE, MODE_VERIFY))
+        }
+
+        /** Ask for the passcode, then go straight to choosing allowed apps. */
+        fun openAllowedApps(ctx: Context) {
+            ctx.startActivity(
+                Intent(ctx, PinActivity::class.java).putExtra(EXTRA_MODE, MODE_VERIFY).putExtra(EXTRA_NEXT, NEXT_APPS)
+            )
         }
 
         /** Create a new passcode (first setup, or "Change passcode"). */
@@ -169,7 +178,9 @@ class PinActivity : Activity() {
         if (pin.isEmpty()) return
         if (Passcode.check(this, pin)) {
             AdminSession.grant()
-            startActivity(Intent(this, AdminActivity::class.java))
+            val next = if (intent.getStringExtra(EXTRA_NEXT) == NEXT_APPS) AllowedAppsActivity::class.java
+            else AdminActivity::class.java
+            startActivity(Intent(this, next))
             finish()
         } else {
             clearEntry()
