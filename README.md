@@ -8,6 +8,11 @@ These are allowed too, under **More apps** (one tap from the home screen):
 
 - **Files and documents:** Microsoft 365, Word, Excel, PowerPoint, OneNote, OneDrive, Google Drive, Docs, Sheets, Slides, Adobe Acrobat
 - **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Samsung Wallet, Google Wallet
+- **Banking and money:** Chase, Bank of America, Wells Fargo, Capital One, Citi, U.S. Bank, PNC, Truist, Discover, Amex, Ally, SoFi, Chime, Navy Federal, USAA, TD, Citizens, Fifth Third, Regions, KeyBank, Huntington, Venmo, PayPal, Cash App, Zelle, Credit Karma, Rocket Money, Fidelity, Schwab and Vanguard. Any other installed bank or credit union app is listed under **Suggested** in the passcode holder's app picker.
+- **Food:** DoorDash, Uber Eats, Grubhub, Instacart, Starbucks, Chick-fil-A, McDonald's, Chipotle, Domino's, Pizza Hut, Papa John's, Taco Bell, Panera, Dunkin', Subway, Wendy's, Burger King, Kroger, Publix and Safeway
+- **Shopping:** Amazon, Walmart, Target, Costco, Sam's Club, eBay, Etsy, Best Buy, Home Depot, Lowe's, IKEA, Kohl's, Nike, CVS, Walgreens and Shop
+
+More apps is grouped into these sections.
 
 Apps on these lists that aren't installed yet show up as soon as they're installed.
 

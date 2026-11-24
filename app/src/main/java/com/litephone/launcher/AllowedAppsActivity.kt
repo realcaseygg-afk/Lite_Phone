@@ -43,11 +43,16 @@ class AllowedAppsActivity : Activity() {
         val suggestions = Policy.SUGGESTED.associateBy { it.pkg }
 
         val allowedApps = allowed.mapNotNull { installed[it] }
+        // Installed banks / credit unions not on the built-in list.
+        val bankLike = installed.values
+            .filter { it.pkg !in allowed && it.pkg !in suggestions && Policy.looksLikeBanking(it) }
+            .sortedBy { it.label.lowercase() }
         val suggestedApps = Policy.SUGGESTED
             .filter { it.pkg !in allowed }
-            .mapNotNull { installed[it.pkg] }
+            .mapNotNull { installed[it.pkg] } + bankLike
+        val suggestedPkgs = suggestedApps.map { it.pkg }.toSet()
         val otherApps = installed.values
-            .filter { it.pkg !in allowed && it.pkg !in suggestions }
+            .filter { it.pkg !in allowed && it.pkg !in suggestedPkgs }
             .sortedBy { it.label.lowercase() }
 
         header(c, "Allowed (${allowedApps.size})")
@@ -66,7 +71,8 @@ class AllowedAppsActivity : Activity() {
             }
             suggestedApps.forEach { app ->
                 val s = suggestions[app.pkg]
-                row(c, app, false, s?.let { "${it.group}: ${it.why}" }, hintColor = Ui.ACCENT)
+                val hint = s?.let { "${it.group}: ${it.why}" } ?: "Banking: looks like a bank or credit union app"
+                row(c, app, false, hint, hintColor = Ui.ACCENT)
             }
         }
 

@@ -27,7 +27,14 @@ class MoreAppsActivity : Activity() {
         val arrange = { startActivity(Intent(this, ArrangeActivity::class.java)) }
         val apps = Policy.moreEntries(this)
         if (apps.isEmpty()) c.addView(Ui.text(this, "Nothing here.", 16f, Ui.MUTED), Ui.lp(this, 12))
-        for (app in apps) c.addView(AppRow.build(this, app, compact = true, onLongClick = arrange), Ui.lp(this))
+        // Grouped into sections: Files and documents, Everyday, Banking and money, Food, Shopping, Other.
+        val order = Policy.CATEGORIES.map { it.first } + "Other"
+        val groups = apps.groupBy { Policy.categoryOf(it) }
+        for (name in order) {
+            val group = groups[name] ?: continue
+            c.addView(Ui.text(this, name.uppercase(), 13f, Ui.MUTED, bold = true), Ui.lp(this, 24))
+            for (app in group) c.addView(AppRow.build(this, app, compact = true, onLongClick = arrange), Ui.lp(this))
+        }
         c.addView(Ui.button(this, "Arrange home screen", Ui.SURFACE, Ui.ACCENT) { arrange() }, Ui.lp(this, 24))
         c.addView(Ui.button(this, "Back", Ui.BG, Ui.MUTED) { finish() }, Ui.lp(this, 8))
         Ui.showScrolling(this, c)

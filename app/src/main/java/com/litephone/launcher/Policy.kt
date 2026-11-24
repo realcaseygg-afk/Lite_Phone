@@ -100,14 +100,110 @@ object Policy {
         "com.google.android.apps.walletnfcrefapp",      // Google Wallet
     )
 
+    val BANKING_APPS = listOf(
+        "com.chase.sig.android",                        // Chase
+        "com.infonow.bofa",                             // Bank of America
+        "com.wf.wellsfargomobile",                      // Wells Fargo
+        "com.konylabs.capitalone",                      // Capital One
+        "com.citi.citimobile",                          // Citi
+        "com.usbank.mobilebanking",                     // U.S. Bank
+        "com.pnc.ecommerce.mobile",                     // PNC
+        "com.truist.mobile",                            // Truist
+        "com.discoverfinancial.mobile",                 // Discover
+        "com.americanexpress.android.acctsvcs.us",      // American Express
+        "com.ally.MobileBanking",                       // Ally
+        "com.sofi.mobile",                              // SoFi
+        "com.onedebit.chime",                           // Chime
+        "com.navyfederal.android",                      // Navy Federal
+        "com.usaa.mobile.android.usaa",                 // USAA
+        "com.tdbank",                                   // TD Bank
+        "com.citizensbank.androidapp",                  // Citizens
+        "com.clairmail.fth",                            // Fifth Third
+        "com.regions.mobbanking",                       // Regions
+        "com.key.android",                              // KeyBank
+        "com.huntington.m",                             // Huntington
+        "com.venmo",                                    // Venmo
+        "com.paypal.android.p2pmobile",                 // PayPal
+        "com.squareup.cash",                            // Cash App
+        "com.zellepay.zelle",                           // Zelle
+        "com.creditkarma.mobile",                       // Credit Karma
+        "com.truebill",                                 // Rocket Money
+        "com.fidelity.android",                         // Fidelity
+        "com.schwab.mobile",                            // Charles Schwab
+        "com.vanguard",                                 // Vanguard
+    )
+    val FOOD_APPS = listOf(
+        "com.dd.doordash",                              // DoorDash
+        "com.ubercab.eats",                             // Uber Eats
+        "com.grubhub.android",                          // Grubhub
+        "com.instacart.client",                         // Instacart
+        "com.starbucks.mobilecard",                     // Starbucks
+        "com.chickfila.cfaflagship",                    // Chick-fil-A
+        "com.mcdonalds.app",                            // McDonald's
+        "com.chipotle.ordering",                        // Chipotle
+        "com.dominospizza",                             // Domino's
+        "com.yum.pizzahut",                             // Pizza Hut
+        "com.papajohns.android",                        // Papa John's
+        "com.tacobell.ordering",                        // Taco Bell
+        "com.panera.bread",                             // Panera
+        "com.dunkinbrands.otgo",                        // Dunkin'
+        "com.subway.mobile.subwayapp03",                // Subway
+        "com.wendys.nutritionaltool",                   // Wendy's
+        "com.emn8.mobilem8.nativeapp.bk",               // Burger King
+        "com.kroger.mobile",                            // Kroger
+        "com.publix.main",                              // Publix
+        "com.safeway.client.android.safeway",           // Safeway
+    )
+    val SHOPPING_APPS = listOf(
+        "com.amazon.mShop.android.shopping",            // Amazon
+        "com.walmart.android",                          // Walmart
+        "com.target.ui",                                // Target
+        "com.costco.app.android",                       // Costco
+        "com.rfi.sams.android",                         // Sam's Club
+        "com.ebay.mobile",                              // eBay
+        "com.etsy.android",                             // Etsy
+        "com.bestbuy.android",                          // Best Buy
+        "com.thehomedepot",                             // Home Depot
+        "com.lowes.android",                            // Lowe's
+        "com.ingka.ikea.app",                           // IKEA
+        "com.kohls.mcommerce.opal",                     // Kohl's
+        "com.nike.omega",                               // Nike
+        "com.cvs.launchers.cvs",                        // CVS
+        "com.usablenet.mobile.walgreen",                // Walgreens
+        "com.shopify.arrive",                           // Shop (package tracking)
+    )
+
+    /** Sections used on the More apps screen. */
+    val CATEGORIES: List<Pair<String, List<String>>> by lazy {
+        listOf(
+            "Files and documents" to FILES_APPS,
+            "Everyday" to EVERYDAY_APPS,
+            "Banking and money" to BANKING_APPS,
+            "Food" to FOOD_APPS,
+            "Shopping" to SHOPPING_APPS,
+        )
+    }
+
+    fun categoryOf(app: AppEntry): String =
+        CATEGORIES.firstOrNull { app.pkg in it.second }?.first
+            ?: if (looksLikeBanking(app)) "Banking and money" else "Other"
+
+    private val BANK_WORDS = Regex("\\b(bank|banking|credit union|fcu|cu|federal|financial|savings)\\b")
+
+    /** Local banks and credit unions can't all be listed by name, so spot them by name. */
+    fun looksLikeBanking(app: AppEntry): Boolean =
+        BANK_WORDS.containsMatchIn(app.label.lowercase()) ||
+            app.pkg.contains("bank", ignoreCase = true) || app.pkg.contains("creditunion", ignoreCase = true)
+
     class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 4
+    const val DEFAULTS_VERSION = 5
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
         DefaultsUpdate(4, FILES_APPS + EVERYDAY_APPS, inMoreApps = true),
+        DefaultsUpdate(5, BANKING_APPS + FOOD_APPS + SHOPPING_APPS, inMoreApps = true),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -142,6 +238,8 @@ object Policy {
         Suggestion("com.google.android.apps.maps", "Everyday", "Getting around"),
         Suggestion("com.samsung.android.spay", "Everyday", "Tap to pay and student ID cards"),
         Suggestion("com.google.android.apps.walletnfcrefapp", "Everyday", "Tap to pay and student ID cards"),
+        Suggestion("com.ubercab", "Everyday", "Rides"),
+        Suggestion("me.lyft.android", "Everyday", "Rides"),
     )
 
     /**
@@ -231,7 +329,8 @@ object Policy {
             Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA), PackageManager.MATCH_DEFAULT_ONLY
         )?.activityInfo?.packageName
 
-        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS).distinct()
+        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
+            BANKING_APPS + FOOD_APPS + SHOPPING_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly
