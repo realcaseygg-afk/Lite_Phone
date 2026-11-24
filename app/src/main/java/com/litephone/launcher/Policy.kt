@@ -20,8 +20,8 @@ object Policy {
 
     // The apps you asked for. Phone/Messages/Camera are looked up on the device;
     // these are the Samsung (then Google) package names used as a fallback.
-    private val PHONE = listOf("com.samsung.android.dialer", "com.google.android.dialer")
-    private val MESSAGES = listOf("com.samsung.android.messaging", "com.google.android.apps.messaging")
+    val PHONE = listOf("com.samsung.android.dialer", "com.google.android.dialer")
+    val MESSAGES = listOf("com.samsung.android.messaging", "com.google.android.apps.messaging")
     private val CAMERA = listOf("com.sec.android.app.camera", "com.google.android.GoogleCamera")
     private val NAMED_APPS = listOf(
         "com.spotify.music",               // Spotify
@@ -224,6 +224,13 @@ object Policy {
         if (looksLikeBanking(app)) return "Banking & Money"
         return OTHER
     }
+
+    /** Category by package alone (the user's choice, else the built-in one). */
+    fun categoryOfPackage(ctx: Context, pkg: String): String? =
+        Prefs.categoryOverride(ctx, pkg) ?: BUILTIN_CATEGORY[pkg]
+
+    /** Food apps never show notifications. */
+    fun isFoodApp(ctx: Context, pkg: String): Boolean = categoryOfPackage(ctx, pkg) == "Food"
 
     class Category(val name: String, val apps: List<AppEntry>)
 

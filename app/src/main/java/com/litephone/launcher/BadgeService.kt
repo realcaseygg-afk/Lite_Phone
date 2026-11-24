@@ -7,9 +7,9 @@ import android.service.notification.NotificationListenerService
 import android.telecom.TelecomManager
 
 /**
- * Counts each app's notifications so the home screen can show missed calls,
- * unread texts and so on, and clears notifications from blocked apps so the
- * notification shade only shows allowed ones. Nothing is stored or sent anywhere.
+ * Counts missed calls and unread texts for the home screen bubbles, clears
+ * notifications from blocked apps while locked, and clears food app notifications
+ * always. Nothing is stored or sent anywhere.
  */
 class BadgeService : NotificationListenerService(), android.content.SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -64,11 +64,19 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
         } catch (e: Exception) {
             null
         }
+        val sms = try {
+            android.provider.Telephony.Sms.getDefaultSmsPackage(this)
+        } catch (e: Exception) {
+            null
+        }
+        // Count bubbles are only for missed calls and texts.
+        val countable = (Policy.PHONE + Policy.MESSAGES + listOfNotNull(dialer, sms)).toSet()
         val enforcing = Policy.isEnforcing(this)
         val map = HashMap<String, Int>()
         for (sbn in active) {
             if (!sbn.isClearable) continue // ongoing calls, music players, downloads
-            if (enforcing && shouldHide(sbn.packageName)) {
+            // Food apps: never any notifications. Blocked apps: none while locked.
+            if (Policy.isFoodApp(this, sbn.packageName) || (enforcing && shouldHide(sbn.packageName))) {
                 try {
                     cancelNotification(sbn.key)
                 } catch (e: Exception) { }
@@ -80,6 +88,7 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
             if (n.extras?.containsKey(Notification.EXTRA_MEDIA_SESSION) == true) continue
             var pkg = sbn.packageName
             if (pkg in CALL_PACKAGES && dialer != null) pkg = dialer
+            if (pkg !in countable) continue
             map[pkg] = (map[pkg] ?: 0) + maxOf(1, n.number)
         }
         publish(map)
