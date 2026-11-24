@@ -35,6 +35,13 @@ class AdminActivity : Activity() {
             else -> "Locked. Only allowed apps can open." to Ui.GOOD
         }
         c.addView(Ui.text(this, status, 16f, color), Ui.lp(this, 8))
+        val updated = try {
+            java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
+                .format(java.util.Date(packageManager.getPackageInfo(packageName, 0).lastUpdateTime))
+        } catch (e: Exception) {
+            "unknown"
+        }
+        c.addView(Ui.text(this, "Lite Phone ${BuildConfig.VERSION_NAME}, installed $updated", 13f, Ui.MUTED), Ui.lp(this, 6))
 
         fun add(label: String, bg: Int = Ui.SURFACE, fg: Int = Ui.FG, top: Int = 12, action: () -> Unit) =
             c.addView(Ui.button(this, label, bg, fg, action), Ui.lp(this, top))

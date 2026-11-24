@@ -80,6 +80,9 @@ class LauncherActivity : Activity() {
             addView(bottomLink("My use") {
                 startActivity(Intent(this@LauncherActivity, UsageActivity::class.java))
             }, weight())
+            addView(bottomLink("Options") {
+                startActivity(Intent(this@LauncherActivity, OptionsActivity::class.java))
+            }, weight())
             addView(bottomLink("\uD83D\uDD12 Passcode") {
                 PinActivity.openAdmin(this@LauncherActivity)
             }, weight())

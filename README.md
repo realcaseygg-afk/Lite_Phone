@@ -19,7 +19,8 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
 - **Arrange:** long-press any app to reorder the home screen or move apps between Home and More apps. This doesn't need the passcode, because it can't change which apps are allowed.
-- **Customize:** long-press the clock, or go through Arrange, to change the look:
+- **Options** (bottom of the home screen) opens Customize, Arrange, My use and Updates.
+- **Customize:** long-press the clock, or use Options, to change the look:
   - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable
   - **Accent colour**
   - **Icons:** grey, colour or none
@@ -66,7 +67,18 @@ The optional steps can be done later from **Passcode → Protection checklist**.
 
 ## Updating
 
-Every push to this repo builds a new `LitePhone.apk` on the Releases page. To install an update, the passcode holder unlocks all apps for 15 minutes, turns Auto Blocker off if needed, then downloads and installs the new APK over the old one. Settings and the passcode are kept.
+Every push to this repo builds a new `LitePhone.apk` on the Releases page.
+
+**Without the passcode:** go to **Options → Updates**. This needs the passcode holder to tick *Allow Lite Phone to update itself* in the protection checklist once.
+
+- **Check for updates** downloads the latest release and installs it. This only works if this GitHub repo is **public**, because a private repo's downloads need a GitHub login.
+- **Install from a file** takes a `LitePhone.apk` you've saved to Google Drive, OneDrive, email or Downloads.
+
+Either way, Lite Phone only accepts a file that is Lite Phone, signed with the same key and newer than the installed version. On Android 12 and later it installs without a confirmation screen. If Samsung's Auto Blocker is on, it may stop the install.
+
+**The other way:** the passcode holder unlocks all apps for 15 minutes, then the APK is downloaded and installed by hand.
+
+Settings and the passcode are kept either way. The passcode menu shows the installed version and its date.
 
 ## Limits
 
@@ -75,6 +87,7 @@ Lite Phone is a strong speed bump, but it isn't a vault. A normal launcher can't
 - **Safe mode.** Holding Power and then long-pressing *Power off* starts the phone without third-party apps. Lite Phone comes back after a normal restart.
 - **Factory reset** from the recovery menu, which erases the phone.
 - **A computer with USB debugging**, which needs Developer options turned on first. Those Settings pages are locked.
+- **Self-updates.** Whoever controls this GitHub repo could publish a build with the lock removed, and Options → Updates would install it. The passcode menu shows the installed version and date, so a change is visible.
 
 The only way to close those gaps is Android's "device owner" kiosk mode. That needs the phone wiped and set up from a computer.
 
@@ -88,6 +101,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Passcode` | Stores only a salted PBKDF2 hash of the passcode, with lockout after wrong tries |
 | `Policy` | The allow list, plus the system parts that must never be blocked |
 | `BadgeService` | Notification listener that only counts notifications per app for the home screen badges |
+| `Updater`, `UpdateActivity` | Self-update: downloads or opens an APK, checks the package, signing key and version, then installs it |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 

@@ -13,7 +13,14 @@ android {
         targetSdk = 35
         // CI sets GITHUB_RUN_NUMBER so every build can install over the previous one.
         versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
-        versionName = "1.0.${System.getenv("GITHUB_RUN_NUMBER") ?: "0"}"
+        versionName = "build ${System.getenv("GITHUB_RUN_NUMBER") ?: "dev"}"
+        // Where Options > Updates looks for new builds (the latest GitHub release of this repo).
+        val repo = System.getenv("GITHUB_REPOSITORY") ?: "realcaseygg-afk/Lite_Phone"
+        buildConfigField("String", "UPDATE_URL", "\"https://github.com/$repo/releases/latest/download/LitePhone.apk\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     // One fixed key so new builds install as updates over old ones.

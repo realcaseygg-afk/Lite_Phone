@@ -163,6 +163,15 @@ object Policy {
 
     private val pause = Deadline("pause_until", "pause_boot")
 
+    // Android's installer, allowed for a couple of minutes only when Lite Phone is updating itself.
+    private val INSTALLERS = setOf(
+        "com.google.android.packageinstaller", "com.android.packageinstaller",
+        "com.samsung.android.packageinstaller",
+    )
+    private val installerWindow = Deadline("installer_until", "installer_boot")
+
+    fun allowInstallerBriefly(ctx: Context) = installerWindow.set(ctx, 2 * 60_000L)
+
     /** True when apps that aren't allowed should be closed right now. */
     fun isEnforcing(ctx: Context): Boolean =
         Prefs.isArmed(ctx) && Passcode.isSet(ctx) && pause.remainingMs(ctx) == 0L
@@ -188,6 +197,7 @@ object Policy {
         if (pkg in ALWAYS_ALLOWED) return true
         if (pkg in Prefs.allowedList(ctx)) return true
         if (pkg in systemHelpers(ctx)) return true
+        if (pkg in INSTALLERS && installerWindow.remainingMs(ctx) > 0) return true
         // The recent-apps screen belongs to the stock launcher on Samsung; let it
         // show (anything opened from it is still checked).
         if (className != null && className.contains("Recents", ignoreCase = true) &&
