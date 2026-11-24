@@ -85,6 +85,38 @@ class CustomizeActivity : Activity() {
             Look.setShowDate(this, it == "on")
         }
 
+        // Weather
+        choice(c, "Weather by the clock", listOf("on" to "Show", "off" to "Hide"),
+            if (Weather.enabled(this)) "on" else "off") { Weather.setEnabled(this, it == "on") }
+        if (Weather.enabled(this)) {
+            choice(c, "Weather for", listOf("location" to "Where I am", "city" to "A city"),
+                if (Weather.usesCity(this)) "city" else "location") { Weather.setUseCity(this, it == "city") }
+            if (Weather.usesCity(this)) {
+                val city = Weather.cityName(this)
+                c.addView(Ui.text(this, if (city != null) "Showing weather for $city." else "Type a city below.", 14f, Ui.MUTED), Ui.lp(this, 8))
+                val field = Ui.input(this, "City, e.g. Austin", android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+                c.addView(field, Ui.lp(this, 6))
+                c.addView(Ui.smallButton(this, "Set city") {
+                    val q = field.text.toString()
+                    if (q.isBlank()) return@smallButton
+                    Weather.setCity(this, q) { name ->
+                        Toast.makeText(this, if (name != null) "Weather set to $name" else "Couldn't find that city", Toast.LENGTH_SHORT).show()
+                        render()
+                    }
+                }, Ui.lp(this, 6))
+            } else {
+                c.addView(Ui.text(
+                    this,
+                    "Uses your approximate location (about 1 km). Only that is sent to Open-Meteo, a free weather service." +
+                        if (!Weather.hasLocationPermission(this)) " Tap the weather on the home screen to allow location." else "",
+                    13f, Ui.MUTED
+                ), Ui.lp(this, 6))
+            }
+            choice(c, "Temperature", listOf("auto" to "Auto", "f" to "\u00B0F", "c" to "\u00B0C"), Weather.unit(this)) {
+                Weather.setUnit(this, it)
+            }
+        }
+
         c.addView(Ui.button(this, "Arrange apps", Ui.SURFACE, Ui.ACCENT) {
             startActivity(Intent(this, ArrangeActivity::class.java))
         }, Ui.lp(this, 32))

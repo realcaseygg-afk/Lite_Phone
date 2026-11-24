@@ -209,7 +209,7 @@ object Policy {
         put("Banking & Money", BANKING_APPS + listOf("com.samsung.android.spay", "com.google.android.apps.walletnfcrefapp"))
         put("Food", FOOD_APPS)
         put("Shopping", SHOPPING_APPS)
-        put("Everyday", EVERYDAY_APPS + listOf(SETTINGS, "com.ubercab", "me.lyft.android"))
+        put("Everyday", EVERYDAY_APPS + Weather.WEATHER_APPS + listOf(SETTINGS, "com.ubercab", "me.lyft.android"))
         m
     }
 
@@ -306,7 +306,7 @@ object Policy {
     )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 12
+    const val DEFAULTS_VERSION = 13
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -321,6 +321,7 @@ object Policy {
         DefaultsUpdate(11, listOf("com.google.android.apps.walletnfcrefapp"), inMoreApps = false,
             removed = listOf("com.samsung.android.spay")),
         DefaultsUpdate(12, listOf("com.amazon.kindle"), inMoreApps = false),
+        DefaultsUpdate(13, Weather.WEATHER_APPS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -452,7 +453,8 @@ object Policy {
         )?.activityInfo?.packageName
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
-            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS + PASSWORD_MANAGERS).distinct()
+            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS + PASSWORD_MANAGERS +
+            Weather.WEATHER_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly

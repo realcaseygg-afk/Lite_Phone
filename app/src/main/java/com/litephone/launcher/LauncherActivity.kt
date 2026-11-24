@@ -37,11 +37,16 @@ class LauncherActivity : Activity() {
     private lateinit var dim: View
     private lateinit var bottomBar: LinearLayout
     private lateinit var search: EditText
+    private lateinit var header: LinearLayout
+    private lateinit var wxBox: LinearLayout
+    private lateinit var wxMain: TextView
+    private lateinit var wxDetail: TextView
     private val handler = Handler(Looper.getMainLooper())
     private val badgesChanged: () -> Unit = { refreshApps() }
     private val ticker = object : Runnable {
         override fun run() {
             updateBanner()
+            if (Weather.enabled(this@LauncherActivity) && Weather.isStale(this@LauncherActivity)) loadWeather()
             handler.postDelayed(this, 10_000)
         }
     }
@@ -110,8 +115,24 @@ class LauncherActivity : Activity() {
             }, weight())
         }
 
+        // Weather sits beside the big clock (or under it when centred).
+        wxMain = Ui.text(this, "", 30f).apply { isSingleLine = true }
+        wxDetail = Ui.text(this, "", 13f, 0xFFD0D0D6.toInt())
+        wxBox = Ui.column(this).apply {
+            addView(wxMain)
+            addView(wxDetail)
+            isClickable = true
+            setOnClickListener { onWeatherTap() }
+            setOnLongClickListener { startActivity(Intent(this@LauncherActivity, CustomizeActivity::class.java)); true }
+        }
+        header = LinearLayout(this).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            addView(clock)
+            addView(wxBox)
+        }
+
         val content = Ui.column(this).apply {
-            addView(clock, Ui.lp(this@LauncherActivity, 24).apply { leftMargin = pad; rightMargin = pad })
+            addView(header, Ui.lp(this@LauncherActivity, 24).apply { leftMargin = pad; rightMargin = pad })
             addView(date, Ui.lp(this@LauncherActivity).apply { leftMargin = pad; rightMargin = pad })
             addView(search, Ui.lp(this@LauncherActivity, 16).apply { leftMargin = pad; rightMargin = pad })
             addView(banner, Ui.lp(this@LauncherActivity, 12).apply { leftMargin = pad; rightMargin = pad })
@@ -154,6 +175,20 @@ class LauncherActivity : Activity() {
             t.gravity = gravity
             if (shadow) t.setShadowLayer(10f, 0f, 1f, 0xCC000000.toInt()) else t.setShadowLayer(0f, 0f, 0f, 0)
         }
+        val centered = Look.centered(this)
+        header.orientation = if (centered) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        header.gravity = if (centered) Gravity.CENTER_HORIZONTAL else Gravity.CENTER_VERTICAL
+        clock.layoutParams = if (centered)
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        wxBox.gravity = if (centered) Gravity.CENTER_HORIZONTAL else Gravity.END
+        for (t in listOf(wxMain, wxDetail)) {
+            t.gravity = if (centered) Gravity.CENTER_HORIZONTAL else Gravity.END
+            t.typeface = Look.typeface(this)
+            if (shadow) t.setShadowLayer(10f, 0f, 1f, 0xCC000000.toInt()) else t.setShadowLayer(0f, 0f, 0f, 0)
+        }
+        wxBox.visibility = if (Weather.enabled(this)) View.VISIBLE else View.GONE
+        showWeather()
         clock.typeface = Look.clockTypeface(this)
         clock.visibility = if (Look.clock(this) == "hidden") View.GONE else View.VISIBLE
         clock.textSize = if (Look.clock(this) == "small") 48f else 72f
@@ -176,6 +211,7 @@ class LauncherActivity : Activity() {
         applyLook()
         clearSearch()
         refreshApps()
+        if (Weather.enabled(this) && Weather.isStale(this)) loadWeather()
         BadgeService.addListener(badgesChanged)
         handler.removeCallbacks(ticker)
         handler.post(ticker)
@@ -265,6 +301,63 @@ class LauncherActivity : Activity() {
             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { leftMargin = Ui.dp(this@LauncherActivity, 10) })
         return row
+    }
+
+    // ---- Weather ----
+
+    private fun showWeather() {
+        if (!Weather.enabled(this)) return
+        val now = Weather.cached(this)
+        if (now == null) {
+            wxMain.text = ""
+            wxDetail.text = if (Weather.needsSetup(this)) "Tap for weather" else ""
+            return
+        }
+        val (icon, words) = Weather.describe(now.code, now.isDay)
+        wxMain.text = "$icon ${now.temp}\u00B0"
+        val place = if (now.place.isNotBlank()) "\n${now.place}" else ""
+        wxDetail.text = "$words \u00B7 H ${now.hi}\u00B0 L ${now.lo}\u00B0$place"
+    }
+
+    private fun loadWeather(force: Boolean = false) {
+        Weather.refresh(this, force) { _, err ->
+            if (isFinishing || isDestroyed) return@refresh
+            if (err != null && Weather.cached(this) == null) {
+                wxMain.text = ""
+                wxDetail.text = if (err == "setup") "Tap for weather" else err
+            } else {
+                showWeather()
+            }
+        }
+    }
+
+    /** Tap: set up weather if needed, otherwise open the weather app. */
+    private fun onWeatherTap() {
+        if (Weather.needsSetup(this)) {
+            if (Weather.usesCity(this)) {
+                startActivity(Intent(this, CustomizeActivity::class.java))
+            } else {
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION), 42)
+            }
+            return
+        }
+        val app = Weather.WEATHER_APPS.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+        if (app != null) {
+            startActivity(app.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } else {
+            Toast.makeText(this, "Updating weather\u2026", Toast.LENGTH_SHORT).show()
+            loadWeather(force = true)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != 42) return
+        if (Weather.hasLocationPermission(this)) {
+            loadWeather(force = true)
+        } else {
+            Toast.makeText(this, "No location, so no weather. You can pick a city in Customize.", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun updateBanner() {

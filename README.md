@@ -25,6 +25,7 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 The home screen lists **categories**: Phone & Messages, School, Notes & Tasks, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
 
+- **Weather by the clock:** the current temperature and conditions, today's high and low, and your town. Tap it once to allow approximate location. After that, tapping opens your weather app (Samsung Weather, The Weather Channel or AccuWeather, all allowed under Everyday), and long-pressing opens Customize. Data comes from [Open-Meteo](https://open-meteo.com), which is free and needs no account. Only a location rounded to about 1 km is sent. In **Customize** you can pick a city instead of using your location, choose °F or °C, or hide the weather.
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
 - **Quiet notifications:** notifications from **food apps are always cleared**, even during an unlock. Notifications from blocked apps are cleared automatically too, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. Clearing blocked apps is paused during an unlock. Both use the same notification access as the count bubbles.
@@ -116,6 +117,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Updater`, `UpdateActivity` | Updates Lite Phone and the apps in `my-apps.json`: downloads or opens an APK, checks the package, signing key and version, then installs it |
 | `WebPass` | Time-limited browser access: tracks the daily count and which apps are browsers |
 | `ReorderList`, `ArrangeActivity` | Drag-and-drop ordering of categories and apps, moving apps between categories, and custom categories |
+| `Weather` | Home screen weather from Open-Meteo, cached for 30 minutes, using a rounded location or a chosen city |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
