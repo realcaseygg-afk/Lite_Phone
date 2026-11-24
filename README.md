@@ -52,7 +52,7 @@ Open **⚙ Settings → 🔒 Passcode menu** and enter the passcode to:
 
 After 5 wrong passcode tries, entry locks for 30 seconds. Each further wrong try doubles the wait, up to 1 hour.
 
-These always keep working: your chosen **autofill and passkey provider** (Samsung Pass, Google or a password manager), Android's app installer (a newly installed app stays blocked until the passcode holder allows it), calls (including emergency calls), emergency alerts, the keyboard, contacts, alarms, permission pop-ups, Google sign-in, photo and file pickers, and the notification shade and quick settings.
+These always keep working: Samsung's **Modes and Routines**, for turning Work, Sleep or Driving mode on and off. Your chosen **autofill and passkey provider** (Samsung Pass, Google or a password manager), Android's app installer (a newly installed app stays blocked until the passcode holder allows it), calls (including emergency calls), emergency alerts, the keyboard, contacts, alarms, permission pop-ups, Google sign-in, photo and file pickers, and the notification shade and quick settings.
 
 ## Install on the S25+
 

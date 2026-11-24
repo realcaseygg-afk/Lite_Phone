@@ -59,6 +59,7 @@ object Policy {
         "com.android.cellbroadcastreceiver",
         "com.google.android.cellbroadcastreceiver",
         "com.samsung.android.biometrics.app.setting",
+        "com.samsung.android.app.routines",             // Modes and Routines (Work, Sleep, Driving...)
         "com.samsung.android.samsungpass",              // Samsung Pass (autofill and passkeys)
         "com.samsung.android.samsungpassautofill",
         "com.samsung.android.authfw",
