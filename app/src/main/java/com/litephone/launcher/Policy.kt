@@ -181,7 +181,7 @@ object Policy {
 
     /** Default category order on the home screen. */
     val CATEGORY_NAMES = listOf(
-        "Phone & Messages", "School", "Sign-in & Security", "AI", "Music & Books", "Camera & Photos",
+        "Phone & Messages", "School", "Notes & Tasks", "Sign-in & Security", "AI", "Music & Books", "Camera & Photos",
         "Banking & Money", "Food", "Shopping", "Everyday", OTHER,
     )
 
@@ -197,6 +197,7 @@ object Policy {
         put("Music & Books", listOf("com.spotify.music", "com.audible.application"))
         put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
         put("Sign-in & Security", AUTHENTICATOR_APPS)
+        put("Notes & Tasks", NOTES_APPS)
         put("School", listOf(
             "com.instructure.candroid", "com.microsoft.teams", "us.zoom.videomeetings",
             "com.google.android.apps.classroom", "com.quizlet.quizletandroid", "com.mainichinote.app",
@@ -249,10 +250,29 @@ object Policy {
         "com.entrust.identityGuard.mobile",             // Entrust Identity
     )
 
+    val NOTES_APPS = listOf(
+        "com.samsung.android.app.notes",                // Samsung Notes
+        "com.microsoft.office.onenote",                 // OneNote
+        "com.google.android.keep",                      // Google Keep
+        "notion.id",                                    // Notion
+        "com.evernote",                                 // Evernote
+        "md.obsidian",                                  // Obsidian
+        "com.logseq.app",                               // Logseq
+        "com.automattic.simplenote",                    // Simplenote
+        "com.standardnotes",                            // Standard Notes
+        "net.cozic.joplin",                             // Joplin
+        "com.steadfastinnovation.android.projectpapyrus", // Squid
+        "com.myscript.nebo",                            // Nebo
+        "com.microsoft.todos",                          // Microsoft To Do
+        "com.todoist",                                  // Todoist
+        "com.ticktick.task",                            // TickTick
+        "com.samsung.android.app.reminder",             // Samsung Reminder
+    )
+
     class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 8
+    const val DEFAULTS_VERSION = 9
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -261,6 +281,7 @@ object Policy {
         DefaultsUpdate(6, listOf("com.google.android.gm"), inMoreApps = false),
         DefaultsUpdate(7, listOf("com.mainichinote.app"), inMoreApps = false),
         DefaultsUpdate(8, AUTHENTICATOR_APPS, inMoreApps = false),
+        DefaultsUpdate(9, NOTES_APPS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -393,7 +414,7 @@ object Policy {
         )?.activityInfo?.packageName
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
-            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS).distinct()
+            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly
