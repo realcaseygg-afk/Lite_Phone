@@ -48,9 +48,10 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
     private fun scheduleRecheck() {
         handler.removeCallbacks(recheck)
         handler.postDelayed(recheck, 300)
-        // When a temporary unlock runs out, close whatever is open.
-        val remaining = Policy.pauseRemainingMs(this)
-        if (remaining > 0) handler.postDelayed(recheck, remaining + 500)
+        // When a temporary unlock or web pass runs out, close whatever is open.
+        for (remaining in listOf(Policy.pauseRemainingMs(this), WebPass.remainingMs(this))) {
+            if (remaining > 0) handler.postDelayed(recheck, remaining + 500)
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

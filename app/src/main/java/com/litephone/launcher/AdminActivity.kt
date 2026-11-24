@@ -61,11 +61,47 @@ class AdminActivity : Activity() {
             Policy.pauseAtLeast(this, 15 * 60_000L)
             startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
-        add("Change passcode") { PinActivity.create(this) }
+        // Web pass settings
+        c.addView(Ui.text(this, "WEB PASS", 13f, Ui.MUTED, bold = true), Ui.lp(this, 28))
+        c.addView(Ui.text(
+            this,
+            "Lets browsers open for a short time without the passcode, a few times a day.",
+            14f, Ui.MUTED
+        ), Ui.lp(this, 4))
+        chips(c, listOf("on" to "On", "off" to "Off"), if (WebPass.enabled(this)) "on" else "off") {
+            WebPass.setEnabled(this, it == "on")
+        }
+        if (WebPass.enabled(this)) {
+            chips(c, listOf("15" to "15 min", "30" to "30 min", "60" to "1 hour"), WebPass.minutes(this).toString()) {
+                WebPass.setMinutes(this, it.toInt())
+            }
+            chips(c, listOf("1" to "1 a day", "2" to "2 a day", "3" to "3 a day"), WebPass.perDay(this).toString()) {
+                WebPass.setPerDay(this, it.toInt())
+            }
+        }
+
+        add("Change passcode", top = 28) { PinActivity.create(this) }
         add("Turn off Lite Phone", Ui.SURFACE, Ui.DANGER, top = 24) { confirmTurnOff() }
         add("Done", Ui.BG, Ui.MUTED, top = 24) { finish() }
 
         Ui.showScrolling(this, c)
+    }
+
+    /** A row of options; the current one is filled in. */
+    private fun chips(parent: android.widget.LinearLayout, options: List<Pair<String, String>>, current: String, onPick: (String) -> Unit) {
+        val line = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.HORIZONTAL }
+        for ((value, label) in options) {
+            val selected = value == current
+            line.addView(
+                Ui.button(this, label, if (selected) Ui.ACCENT else Ui.SURFACE, if (selected) Ui.BG else Ui.FG) {
+                    onPick(value); render()
+                }.apply { textSize = 15f },
+                android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    rightMargin = Ui.dp(this@AdminActivity, 8)
+                }
+            )
+        }
+        parent.addView(line, Ui.lp(this, 8))
     }
 
     private fun unlockFor(minutes: Int) {

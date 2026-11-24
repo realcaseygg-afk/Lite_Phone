@@ -277,6 +277,8 @@ class LauncherActivity : Activity() {
                 "Lite Phone isn't the Home app. Tap for the passcode holder." to Ui.WARN
             armed && paused ->
                 "All apps unlocked until ${Policy.pauseEndText(this)}. Tap to lock now." to Ui.WARN
+            armed && WebPass.isActive(this) ->
+                "\uD83C\uDF10 Web pass until ${WebPass.endText(this)}. Tap to open the browser." to Ui.ACCENT
             else -> null to 0
         }
         if (msg == null) {
@@ -287,7 +289,10 @@ class LauncherActivity : Activity() {
         banner.background = Ui.rounded(color, Ui.dp(this, 12).toFloat())
         banner.visibility = View.VISIBLE
         banner.setOnClickListener {
-            if (paused && Policy.isGuardEnabled(this) && Policy.isDefaultHome(this)) {
+            val healthy = Policy.isGuardEnabled(this) && Policy.isDefaultHome(this)
+            if (healthy && !paused && WebPass.isActive(this)) {
+                WebPass.browserIntent(this)?.let { startActivity(it) }
+            } else if (paused && healthy) {
                 Policy.lockNow(this)
                 updateBanner()
                 Toast.makeText(this, "Locked", Toast.LENGTH_SHORT).show()

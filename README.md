@@ -23,6 +23,7 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 The home screen lists **categories**: Phone & Messages, School, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
 
+- **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
 - **Quiet notifications:** notifications from blocked apps are cleared automatically, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. This is paused during an unlock, and it uses the same notification access as the badges.
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
@@ -43,6 +44,7 @@ Open **⚙ Settings → 🔒 Passcode menu** and enter the passcode to:
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
 - **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
 - **Unlock all of Settings for 15 minutes**, including the locked pages.
+- **Web pass:** turn it on or off, and set its length (15, 30 or 60 minutes) and how many are allowed a day (1–3).
 - **Change the passcode.**
 - **Turn off Lite Phone** to remove it completely.
 
@@ -110,6 +112,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Policy` | The allow list, plus the system parts that must never be blocked |
 | `BadgeService` | Notification listener that counts notifications per app for the badges and clears notifications from blocked apps |
 | `Updater`, `UpdateActivity` | Self-update: downloads or opens an APK, checks the package, signing key and version, then installs it |
+| `WebPass` | Time-limited browser access: tracks the daily count and which apps are browsers |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
