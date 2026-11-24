@@ -31,6 +31,7 @@ object Policy {
         "com.microsoft.office.outlook",    // Outlook
         "com.instructure.candroid",        // Canvas Student
         "com.duosecurity.duomobile",       // Duo Mobile
+        "com.google.android.gm",           // Gmail
     )
 
     /**
@@ -235,12 +236,13 @@ object Policy {
     class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 5
+    const val DEFAULTS_VERSION = 6
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
         DefaultsUpdate(4, FILES_APPS + EVERYDAY_APPS, inMoreApps = true),
         DefaultsUpdate(5, BANKING_APPS + FOOD_APPS + SHOPPING_APPS, inMoreApps = true),
+        DefaultsUpdate(6, listOf("com.google.android.gm"), inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
