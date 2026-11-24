@@ -17,6 +17,8 @@ android {
         // Where Options > Updates looks for new builds (the latest GitHub release of this repo).
         val repo = System.getenv("GITHUB_REPOSITORY") ?: "realcaseygg-afk/Lite_Phone"
         buildConfigField("String", "UPDATE_URL", "\"https://github.com/$repo/releases/latest/download/LitePhone.apk\"")
+        // The list of your other apps that Updates can update (my-apps.json in this repo).
+        buildConfigField("String", "APPS_LIST_URL", "\"https://raw.githubusercontent.com/$repo/HEAD/my-apps.json\"")
     }
 
     buildFeatures {

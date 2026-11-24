@@ -79,16 +79,16 @@ The optional steps can be done later from **⚙ Settings → 🔒 Passcode menu 
 
 Every push to this repo builds a new `LitePhone.apk` on the Releases page.
 
-**Without the passcode:** go to **⚙ Settings → Updates**. This needs the passcode holder to tick *Allow Lite Phone to update itself* in the protection checklist once.
+**⚙ Settings → Updates → Check for updates** checks Lite Phone and **your own apps** together, then shows an **Update** or **Install** button for each one that's newer. No passcode is needed. The passcode holder has to tick *Allow Lite Phone to update itself* in the protection checklist once.
 
-- **Check for updates** downloads the latest release and installs it. This only works if this GitHub repo is **public**, because a private repo's downloads need a GitHub login.
-- **Install from a file** takes a `LitePhone.apk` you've saved to Google Drive, OneDrive, email or Downloads.
+- **Lite Phone** comes from this repo's latest public release.
+- **Your other apps** are listed in [`my-apps.json`](my-apps.json). To add an app, add an entry with its `name`, `package` (applicationId) and `repo`, plus either `path` (an APK committed to the repo's default branch) or `asset` (the APK's file name on the repo's latest release). Lite Phone reads the list fresh each time, so no new build is needed.
+- **Private repos** need a read-only GitHub token, saved on the Updates screen. Create it on GitHub under *Settings → Developer settings → Fine-grained tokens*, give it access to just your app repos with **Contents: Read-only**, and set nothing else. The token is only ever sent to `api.github.com`.
+- **Install from a file** takes an APK from Drive, OneDrive, email or Downloads.
 
-Either way, Lite Phone only accepts a file that is Lite Phone, signed with the same key and newer than the installed version. On Android 12 and later it installs without a confirmation screen. If Samsung's Auto Blocker is on, it may stop the install.
+Every update must be the same app, signed with the same key as the installed version, and newer. Lite Phone updates itself without a confirmation screen. Other apps may show Android's **Update** confirmation. Being listed in `my-apps.json` only covers updates. Whether an app may open is still set in **Add or remove apps**.
 
-**The other way:** the passcode holder unlocks all apps for 15 minutes, then the APK is downloaded and installed by hand.
-
-Settings and the passcode are kept either way. The passcode menu shows the installed version and its date.
+Settings and the passcode are kept. The passcode menu shows the installed Lite Phone version and its date.
 
 ## Limits
 
@@ -111,7 +111,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Passcode` | Stores only a salted PBKDF2 hash of the passcode, with lockout after wrong tries |
 | `Policy` | The allow list, plus the system parts that must never be blocked |
 | `BadgeService` | Notification listener that counts notifications per app for the badges and clears notifications from blocked apps |
-| `Updater`, `UpdateActivity` | Self-update: downloads or opens an APK, checks the package, signing key and version, then installs it |
+| `Updater`, `UpdateActivity` | Updates Lite Phone and the apps in `my-apps.json`: downloads or opens an APK, checks the package, signing key and version, then installs it |
 | `WebPass` | Time-limited browser access: tracks the daily count and which apps are browsers |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |

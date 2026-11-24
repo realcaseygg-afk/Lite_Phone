@@ -10,72 +10,130 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 
 /**
- * Lite Phone updates itself: downloads the newest build (or takes an APK file),
- * checks it really is Lite Phone signed with the same key and newer, then installs it.
+ * Updates Lite Phone and your own apps. Downloads the newest APK (or takes a file),
+ * checks it's the right app, signed with the same key as the installed one and
+ * newer, then installs it.
+ *
+ * Lite Phone comes from this repo's latest public release. Your other apps are
+ * listed in my-apps.json in this repo; private repos are read with a read-only
+ * GitHub token saved on the phone.
  */
 object Updater {
-    // Filled in by the build from the GitHub repository it was built from.
-    val UPDATE_URL: String = BuildConfig.UPDATE_URL
+    private const val KEY_TOKEN = "github_token"
 
-    class Candidate(val file: File, val versionCode: Long, val versionName: String)
+    class AppSource(val name: String, val pkg: String, val repo: String, val path: String?, val asset: String?)
 
-    fun currentVersionCode(ctx: Context): Long = packageInfo(ctx, ctx.packageName, null)?.let { codeOf(it) } ?: 0L
+    class Candidate(
+        val file: File, val pkg: String, val label: String,
+        val versionCode: Long, val versionName: String, val isNew: Boolean,
+    )
 
-    @Suppress("DEPRECATION")
-    private fun codeOf(p: PackageInfo): Long =
-        if (Build.VERSION.SDK_INT >= 28) p.longVersionCode else p.versionCode.toLong()
+    // ---- GitHub token (only sent to api.github.com) ----
+
+    fun token(ctx: Context): String? = Prefs.get(ctx).getString(KEY_TOKEN, null)?.takeIf { it.isNotBlank() }
+
+    fun setToken(ctx: Context, token: String?) {
+        Prefs.get(ctx).edit().putString(KEY_TOKEN, token?.trim()?.takeIf { it.isNotEmpty() }).apply()
+    }
 
     fun canInstall(ctx: Context): Boolean = ctx.packageManager.canRequestPackageInstalls()
 
-    /** Downloads the latest release. Throws with a readable message on failure. */
-    fun download(ctx: Context): File {
-        val out = File(ctx.cacheDir, "update.apk")
-        val conn = URL(UPDATE_URL).openConnection() as HttpURLConnection
-        conn.instanceFollowRedirects = true
-        conn.connectTimeout = 15_000
-        conn.readTimeout = 30_000
-        try {
-            val code = conn.responseCode
-            if (code == 404) throw Exception(
-                "No update found online. If your GitHub repository is private, use \"Install from a file\" instead."
+    fun currentVersionCode(ctx: Context): Long = installedInfo(ctx, ctx.packageName)?.let { codeOf(it) } ?: 0L
+
+    // ---- Where updates come from ----
+
+    /** The apps listed in my-apps.json, read fresh each time. */
+    fun fetchAppList(ctx: Context): List<AppSource> {
+        val text = open(BuildConfig.APPS_LIST_URL, null, null).use { it.readText() }
+        val apps = JSONObject(text).optJSONArray("apps") ?: return emptyList()
+        return (0 until apps.length()).mapNotNull { i ->
+            val o = apps.optJSONObject(i) ?: return@mapNotNull null
+            val pkg = o.optString("package").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            val repo = o.optString("repo").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            AppSource(
+                name = o.optString("name").ifBlank { pkg },
+                pkg = pkg,
+                repo = repo,
+                path = o.optString("path").takeIf { it.isNotBlank() },
+                asset = o.optString("asset").takeIf { it.isNotBlank() },
             )
-            if (code !in 200..299) throw Exception("Download failed (error $code).")
-            conn.inputStream.use { input -> out.outputStream().use { input.copyTo(it) } }
-        } finally {
-            conn.disconnect()
         }
+    }
+
+    fun downloadLitePhone(ctx: Context): File {
+        val out = File(ctx.cacheDir, "update-${ctx.packageName}.apk")
+        val conn = connect(BuildConfig.UPDATE_URL, null, null)
+        conn.inputStream.use { input -> out.outputStream().use { input.copyTo(it) } }
+        return out
+    }
+
+    fun downloadApp(ctx: Context, src: AppSource): File {
+        val token = token(ctx)
+        val out = File(ctx.cacheDir, "update-${src.pkg}.apk")
+        val conn = if (src.path != null) {
+            val path = src.path.split('/').joinToString("/") { URLEncoder.encode(it, "UTF-8").replace("+", "%20") }
+            connect("https://api.github.com/repos/${src.repo}/contents/$path", "application/vnd.github.raw", token)
+        } else {
+            val asset = src.asset ?: throw Exception("No \"path\" or \"asset\" set in my-apps.json.")
+            val release = connect("https://api.github.com/repos/${src.repo}/releases/latest", "application/vnd.github+json", token)
+                .inputStream.bufferedReader().use { it.readText() }
+            val assets = JSONObject(release).optJSONArray("assets")
+            val match = (0 until (assets?.length() ?: 0)).map { assets!!.getJSONObject(it) }
+                .firstOrNull { it.optString("name") == asset } ?: throw Exception("The latest release has no $asset.")
+            connect(match.getString("url"), "application/octet-stream", token)
+        }
+        conn.inputStream.use { input -> out.outputStream().use { input.copyTo(it) } }
         return out
     }
 
     /** Copies a picked APK into the app so it can be checked and installed. */
     fun copyFromUri(ctx: Context, uri: Uri): File {
-        val out = File(ctx.cacheDir, "update.apk")
+        val out = File(ctx.cacheDir, "update-picked.apk")
         ctx.contentResolver.openInputStream(uri)?.use { input -> out.outputStream().use { input.copyTo(it) } }
             ?: throw Exception("Couldn't read that file.")
         return out
     }
 
-    /** Returns the update if [file] is a newer Lite Phone signed with the same key. */
-    fun check(ctx: Context, file: File): Candidate? {
-        val archive = packageInfo(ctx, null, file) ?: throw Exception("That file isn't an Android app.")
-        if (archive.packageName != ctx.packageName) throw Exception("That file isn't Lite Phone.")
-        val mine = packageInfo(ctx, ctx.packageName, null) ?: throw Exception("Couldn't read the installed version.")
-        if (!sameSigner(mine, archive)) throw Exception("That file wasn't signed with Lite Phone's key, so it can't be trusted.")
+    // ---- Checking and installing ----
+
+    /**
+     * Returns the update if [file] is newer than what's installed and signed with the
+     * same key. Null means already up to date. [expectedPkg] null (a picked file) only
+     * accepts apps that are already installed.
+     */
+    fun check(ctx: Context, file: File, expectedPkg: String?): Candidate? {
+        val pm = ctx.packageManager
+        val archive = archiveInfo(ctx, file) ?: throw Exception("That file isn't an Android app.")
+        val pkg = archive.packageName
+        if (expectedPkg != null && pkg != expectedPkg) throw Exception("The downloaded file is a different app ($pkg).")
+        val label = archive.applicationInfo?.let {
+            it.sourceDir = file.path
+            it.publicSourceDir = file.path
+            pm.getApplicationLabel(it).toString()
+        } ?: pkg
+        val installed = installedInfo(ctx, pkg)
         val code = codeOf(archive)
-        if (code <= currentVersionCode(ctx)) return null
-        return Candidate(file, code, archive.versionName ?: code.toString())
+        if (installed == null) {
+            if (expectedPkg == null) throw Exception("$label isn't installed, so there's nothing to update.")
+            return Candidate(file, pkg, label, code, archive.versionName ?: code.toString(), isNew = true)
+        }
+        if (!sameSigner(installed, archive)) throw Exception("That $label file wasn't signed with the same key as the installed app, so it can't be trusted.")
+        if (code <= codeOf(installed)) return null
+        return Candidate(file, pkg, label, code, archive.versionName ?: code.toString(), isNew = false)
     }
 
     fun install(ctx: Context, candidate: Candidate) {
         val installer = ctx.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
-            setAppPackageName(ctx.packageName)
-            // Android 12+: an app updating itself can skip the confirmation screen.
+            setAppPackageName(candidate.pkg)
+            // Android 12+: no confirmation when an app updates itself (or apps it installed).
             if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
         val id = installer.createSession(params)
@@ -86,20 +144,32 @@ object Updater {
             }
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or
                 (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
-            val pending = PendingIntent.getBroadcast(ctx, id, Intent(ctx, InstallResultReceiver::class.java), flags)
+            val result = Intent(ctx, InstallResultReceiver::class.java).putExtra(InstallResultReceiver.EXTRA_LABEL, candidate.label)
+            val pending = PendingIntent.getBroadcast(ctx, id, result, flags)
             session.commit(pending.intentSender)
         }
     }
 
+    // ---- Helpers ----
+
     @Suppress("DEPRECATION")
-    private fun packageInfo(ctx: Context, pkg: String?, apk: File?): PackageInfo? {
-        val pm = ctx.packageManager
-        val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
-        return try {
-            if (apk != null) pm.getPackageArchiveInfo(apk.path, flags) else pm.getPackageInfo(pkg!!, flags)
-        } catch (e: Exception) {
-            null
-        }
+    private fun codeOf(p: PackageInfo): Long =
+        if (Build.VERSION.SDK_INT >= 28) p.longVersionCode else p.versionCode.toLong()
+
+    @Suppress("DEPRECATION")
+    private val SIGNING_FLAGS =
+        if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
+
+    private fun installedInfo(ctx: Context, pkg: String): PackageInfo? = try {
+        ctx.packageManager.getPackageInfo(pkg, SIGNING_FLAGS)
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun archiveInfo(ctx: Context, apk: File): PackageInfo? = try {
+        ctx.packageManager.getPackageArchiveInfo(apk.path, SIGNING_FLAGS)
+    } catch (e: Exception) {
+        null
     }
 
     @Suppress("DEPRECATION")
@@ -109,32 +179,81 @@ object Updater {
         if (sa.isNullOrEmpty() || sb.isNullOrEmpty()) return false
         return sa.map { it.toCharsString() }.toSet() == sb.map { it.toCharsString() }.toSet()
     }
+
+    private fun HttpURLConnection.readText(): String = inputStream.bufferedReader().use { it.readText() }
+
+    private inline fun <T> HttpURLConnection.use(block: (HttpURLConnection) -> T): T =
+        try { block(this) } finally { disconnect() }
+
+    private fun open(url: String, accept: String?, token: String?) = connect(url, accept, token)
+
+    /**
+     * GET with redirects followed by hand, so the token only ever goes to
+     * api.github.com and never to the download servers it redirects to.
+     */
+    private fun connect(url: String, accept: String?, token: String?): HttpURLConnection {
+        var u = URL(url)
+        repeat(6) {
+            val c = u.openConnection() as HttpURLConnection
+            c.instanceFollowRedirects = false
+            c.connectTimeout = 15_000
+            c.readTimeout = 60_000
+            if (accept != null) c.setRequestProperty("Accept", accept)
+            if (u.host == "api.github.com") {
+                c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+                if (token != null) c.setRequestProperty("Authorization", "Bearer $token")
+            }
+            val code = c.responseCode
+            if (code in 300..399) {
+                val location = c.getHeaderField("Location") ?: throw Exception("Download failed (bad redirect).")
+                c.disconnect()
+                u = URL(u, location)
+                return@repeat
+            }
+            if (code in 200..299) return c
+            c.disconnect()
+            throw Exception(
+                when (code) {
+                    401 -> "GitHub rejected the token. It may have expired; make a new one."
+                    403 -> "GitHub refused the request (error 403). Try again later, or add a token."
+                    404 -> "Not found. If the repo is private, add a GitHub token below; also check my-apps.json."
+                    else -> "Download failed (error $code)."
+                }
+            )
+        }
+        throw Exception("Download failed (too many redirects).")
+    }
 }
 
 /** Gets the install result. If Android still wants a confirmation tap, shows it. */
 class InstallResultReceiver : BroadcastReceiver() {
+    companion object {
+        const val EXTRA_LABEL = "label"
+    }
+
     @Suppress("DEPRECATION")
     override fun onReceive(ctx: Context, intent: Intent) {
-        when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
+        val label = intent.getStringExtra(EXTRA_LABEL) ?: "The app"
+        when (val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
-                Policy.allowInstallerBriefly(ctx) // the confirmation screen belongs to Android's installer
+                Policy.allowInstallerBriefly(ctx) // lets the confirmation (and any Settings step) show
                 try {
                     ctx.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 } catch (e: Exception) { }
             }
-            PackageInstaller.STATUS_SUCCESS -> { } // Lite Phone restarts as the new version
+            // If Lite Phone itself was updated, this process is already gone.
+            PackageInstaller.STATUS_SUCCESS -> Toast.makeText(ctx, "$label updated", Toast.LENGTH_SHORT).show()
             else -> {
-                val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "unknown error"
                 val help = when (status) {
                     PackageInstaller.STATUS_FAILURE_ABORTED ->
-                        "The install was cancelled before it was confirmed. Try again and tap Install or Allow " +
-                            "if Android asks. If Samsung's Auto Blocker is on, turn it off first."
+                        "$label: the install was cancelled before it was confirmed. Try again and tap Install or " +
+                            "Allow if Android asks. If Samsung's Auto Blocker is on, turn it off first."
                     PackageInstaller.STATUS_FAILURE_BLOCKED ->
-                        "Android blocked the install. Check Auto Blocker and Play Protect, then try again."
-                    PackageInstaller.STATUS_FAILURE_STORAGE -> "Not enough free space to install the update."
-                    else -> "Update failed: $msg"
+                        "$label: Android blocked the install. Check Auto Blocker and Play Protect, then try again."
+                    PackageInstaller.STATUS_FAILURE_STORAGE -> "Not enough free space to install $label."
+                    else -> "$label update failed: $msg"
                 }
                 Toast.makeText(ctx, help, Toast.LENGTH_LONG).show()
             }

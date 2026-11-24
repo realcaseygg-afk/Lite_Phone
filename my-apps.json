@@ -1,0 +1,11 @@
+{
+  "_help": "Your own apps that Lite Phone > Settings > Updates can update. One entry per app: name, package (its applicationId), repo (owner/name), and either path (an APK committed in the repo's default branch) or asset (the APK's file name on the repo's latest release). Private repos need a read-only GitHub token saved in the Updates screen. This list only covers updates; whether an app may open is still set in Add or remove apps.",
+  "apps": [
+    {
+      "name": "毎日ノート (Japanese)",
+      "package": "com.mainichinote.app",
+      "repo": "realcaseygg-afk/Japanese",
+      "path": "apk/mainichi-note.apk"
+    }
+  ]
+}
