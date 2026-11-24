@@ -7,6 +7,12 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +36,7 @@ class LauncherActivity : Activity() {
     private lateinit var wallpaper: ImageView
     private lateinit var dim: View
     private lateinit var bottomBar: LinearLayout
+    private lateinit var search: EditText
     private val handler = Handler(Looper.getMainLooper())
     private val badgesChanged: () -> Unit = { refreshApps() }
     private val ticker = object : Runnable {
@@ -62,6 +69,26 @@ class LauncherActivity : Activity() {
             setPadding(p, p, p, p)
             visibility = View.GONE
         }
+        search = Ui.input(this, "Search apps", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_FILTER).apply {
+            textSize = 17f
+            background = Ui.rounded(0x33FFFFFF, Ui.dp(this@LauncherActivity, 14).toFloat())
+            setHintTextColor(0xFFB0B0B8.toInt())
+            imeOptions = EditorInfo.IME_ACTION_GO
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                override fun afterTextChanged(s: Editable?) { refreshApps() }
+            })
+            // "Go" on the keyboard opens the top result.
+            setOnEditorActionListener { _, action, _ ->
+                if (action == EditorInfo.IME_ACTION_GO) {
+                    searchResults().firstOrNull()?.let { app ->
+                        try { startActivity(app.intent) } catch (e: Exception) { }
+                    }
+                    true
+                } else false
+            }
+        }
         appList = Ui.column(this)
         scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
@@ -86,7 +113,8 @@ class LauncherActivity : Activity() {
         val content = Ui.column(this).apply {
             addView(clock, Ui.lp(this@LauncherActivity, 24).apply { leftMargin = pad; rightMargin = pad })
             addView(date, Ui.lp(this@LauncherActivity).apply { leftMargin = pad; rightMargin = pad })
-            addView(banner, Ui.lp(this@LauncherActivity, 16).apply { leftMargin = pad; rightMargin = pad })
+            addView(search, Ui.lp(this@LauncherActivity, 16).apply { leftMargin = pad; rightMargin = pad })
+            addView(banner, Ui.lp(this@LauncherActivity, 12).apply { leftMargin = pad; rightMargin = pad })
             addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
                 topMargin = Ui.dp(this@LauncherActivity, 24); leftMargin = pad; rightMargin = pad
             })
@@ -146,6 +174,7 @@ class LauncherActivity : Activity() {
             startActivity(Intent(this, SetupActivity::class.java))
         }
         applyLook()
+        clearSearch()
         refreshApps()
         BadgeService.addListener(badgesChanged)
         handler.removeCallbacks(ticker)
@@ -160,7 +189,23 @@ class LauncherActivity : Activity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        clearSearch()
         scroll.smoothScrollTo(0, 0)
+    }
+
+    private fun clearSearch() {
+        if (search.text.isNotEmpty()) search.setText("")
+        search.clearFocus()
+        getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(search.windowToken, 0)
+    }
+
+    /** Allowed apps whose name matches the search; names starting with it come first. */
+    private fun searchResults(): List<Policy.AppEntry> {
+        val q = search.text.toString().trim().lowercase()
+        if (q.isEmpty()) return emptyList()
+        return Policy.allowedEntries(this)
+            .filter { it.label.lowercase().contains(q) }
+            .sortedWith(compareBy({ !it.label.lowercase().startsWith(q) }, { it.label.lowercase() }))
     }
 
     // The home screen has nowhere to go "back" to.
@@ -171,6 +216,15 @@ class LauncherActivity : Activity() {
 
     private fun refreshApps() {
         appList.removeAllViews()
+        val arrangeApps = { startActivity(Intent(this, ArrangeActivity::class.java)) }
+        if (search.text.isNotBlank()) {
+            val results = searchResults()
+            if (results.isEmpty()) {
+                appList.addView(Ui.text(this, "No allowed app matches that.", 17f, 0xFFB0B0B8.toInt()))
+            }
+            for (app in results) appList.addView(AppRow.build(this, app, compact = true, onLongClick = arrangeApps))
+            return
+        }
         val categories = Policy.categories(this)
         if (categories.isEmpty()) {
             appList.addView(Ui.text(this, "No apps yet. Ask the passcode holder to add some.", 18f, Ui.MUTED))

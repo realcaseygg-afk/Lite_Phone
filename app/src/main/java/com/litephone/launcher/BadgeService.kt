@@ -8,9 +8,10 @@ import android.telecom.TelecomManager
 
 /**
  * Counts each app's notifications so the home screen can show missed calls,
- * unread texts and so on. Nothing is stored or sent anywhere.
+ * unread texts and so on, and clears notifications from blocked apps so the
+ * notification shade only shows allowed ones. Nothing is stored or sent anywhere.
  */
-class BadgeService : NotificationListenerService() {
+class BadgeService : NotificationListenerService(), android.content.SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         @Volatile
@@ -35,8 +36,20 @@ class BadgeService : NotificationListenerService() {
         }
     }
 
-    override fun onListenerConnected() = recount()
-    override fun onListenerDisconnected() = publish(emptyMap())
+    override fun onListenerConnected() {
+        Prefs.get(this).registerOnSharedPreferenceChangeListener(this)
+        recount()
+    }
+
+    override fun onListenerDisconnected() {
+        Prefs.get(this).unregisterOnSharedPreferenceChangeListener(this)
+        publish(emptyMap())
+    }
+
+    /** Locked again, or the allowed apps changed: tidy the shade. */
+    override fun onSharedPreferenceChanged(sp: android.content.SharedPreferences?, key: String?) {
+        main.post { recount() }
+    }
     override fun onNotificationPosted(sbn: android.service.notification.StatusBarNotification?) = recount()
     override fun onNotificationRemoved(sbn: android.service.notification.StatusBarNotification?) = recount()
 
@@ -51,9 +64,16 @@ class BadgeService : NotificationListenerService() {
         } catch (e: Exception) {
             null
         }
+        val enforcing = Policy.isEnforcing(this)
         val map = HashMap<String, Int>()
         for (sbn in active) {
             if (!sbn.isClearable) continue // ongoing calls, music players, downloads
+            if (enforcing && shouldHide(sbn.packageName)) {
+                try {
+                    cancelNotification(sbn.key)
+                } catch (e: Exception) { }
+                continue
+            }
             val n = sbn.notification
             if (n.flags and Notification.FLAG_GROUP_SUMMARY != 0) continue
             if (n.category == Notification.CATEGORY_TRANSPORT) continue
@@ -64,4 +84,11 @@ class BadgeService : NotificationListenerService() {
         }
         publish(map)
     }
+
+    /**
+     * Hide notifications only from blocked apps that have an icon, like a social or
+     * game app. System notices (updates, battery, USB) have no icon and stay.
+     */
+    private fun shouldHide(pkg: String): Boolean =
+        pkg != packageName && !Policy.isAllowed(this, pkg, null) && Policy.isLaunchable(this, pkg)
 }

@@ -419,6 +419,9 @@ object Policy {
     fun allowedEntries(ctx: Context): List<AppEntry> =
         Prefs.allowedList(ctx).mapNotNull { entryFor(ctx, it) }
 
+    fun isLaunchable(ctx: Context, pkg: String): Boolean =
+        ctx.packageManager.getLaunchIntentForPackage(pkg) != null
+
     /** Every app that has an icon in the normal app drawer. */
     fun launchableApps(ctx: Context): List<AppEntry> {
         val pm = ctx.packageManager

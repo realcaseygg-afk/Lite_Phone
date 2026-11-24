@@ -23,6 +23,8 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 The home screen lists **categories**: Phone & Messages, School, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
 
+- **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
+- **Quiet notifications:** notifications from blocked apps are cleared automatically, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. This is paused during an unlock, and it uses the same notification access as the badges.
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
 - **Arrange:** long-press a category or an app to reorder categories, reorder apps within a category, or move an app to a different category. This doesn't need the passcode, because it can't change which apps are allowed.
 - **⚙ Settings** (bottom of the home screen) has My use, Customize look, Arrange, Updates and, behind the passcode, **Add or remove apps** and the **passcode menu**.
@@ -106,7 +108,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `AdminReceiver` | Device admin, which stops Android from uninstalling the app |
 | `Passcode` | Stores only a salted PBKDF2 hash of the passcode, with lockout after wrong tries |
 | `Policy` | The allow list, plus the system parts that must never be blocked |
-| `BadgeService` | Notification listener that only counts notifications per app for the home screen badges |
+| `BadgeService` | Notification listener that counts notifications per app for the badges and clears notifications from blocked apps |
 | `Updater`, `UpdateActivity` | Self-update: downloads or opens an APK, checks the package, signing key and version, then installs it |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
