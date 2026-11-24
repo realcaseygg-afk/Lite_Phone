@@ -60,6 +60,8 @@ object Policy {
         "com.google.android.gms",
         "com.android.providers.media.module",
         "com.google.android.providers.media.module",
+        "com.android.photopicker",
+        "com.google.android.photopicker",
         "com.android.documentsui",
         "com.google.android.documentsui",
         "com.samsung.android.app.sharelive",

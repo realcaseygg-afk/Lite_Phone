@@ -56,7 +56,10 @@ class ArrangeActivity : Activity() {
             }
         }
 
-        c.addView(Ui.button(this, "Done", Ui.SURFACE) { finish() }, Ui.lp(this, 24))
+        c.addView(Ui.button(this, "Customize look", Ui.SURFACE, Ui.ACCENT) {
+            startActivity(android.content.Intent(this, CustomizeActivity::class.java))
+        }, Ui.lp(this, 24))
+        c.addView(Ui.button(this, "Done", Ui.SURFACE) { finish() }, Ui.lp(this, 12))
         Ui.showScrolling(this, c)
     }
 

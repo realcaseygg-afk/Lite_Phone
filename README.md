@@ -20,6 +20,12 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
 - **Arrange:** long-press any app to reorder the home screen or move apps between Home and More apps. This doesn't need the passcode, because it can't change which apps are allowed.
 - **Ask to unlock** texts the passcode holder a request. If they agree, they text back a one-time code. Entering it unlocks all apps for the time they chose: 15 minutes, 30 minutes or 1 hour.
+- **Customize:** long-press the clock, or go through Arrange, to change the look:
+  - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable
+  - **Accent colour**
+  - **Icons:** grey, colour or none
+  - **Text size**, **left or centred layout**, and **font**
+  - **Clock size**, and whether to show the date
 - **My use** shows screen time per app for today and the last 7 days, pickups, and which blocked apps were tried. It's only on this phone, and usage tracking is turned on once in the protection checklist.
 
 ## What the passcode holder can do
@@ -85,6 +91,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `Policy` | The allow list, plus the system parts that must never be blocked |
 | `BadgeService` | Notification listener that only counts notifications per app for the home screen badges |
 | `UnlockCodes` | One-time texted codes, stored as salted SHA-256 hashes |
+| `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
 Building yourself: `./gradlew assembleRelease` with the Android SDK installed. GitHub Actions does this automatically (`.github/workflows/build.yml`). The signing key in `keystore/` is only there so each new build installs as an update over the last one. It isn't a Play Store key.

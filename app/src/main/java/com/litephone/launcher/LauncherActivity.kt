@@ -2,13 +2,17 @@ package com.litephone.launcher
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Typeface
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextClock
@@ -21,6 +25,11 @@ class LauncherActivity : Activity() {
     private lateinit var banner: TextView
     private lateinit var appList: LinearLayout
     private lateinit var scroll: ScrollView
+    private lateinit var clock: TextClock
+    private lateinit var date: TextClock
+    private lateinit var wallpaper: ImageView
+    private lateinit var dim: View
+    private lateinit var bottomBar: LinearLayout
     private val handler = Handler(Looper.getMainLooper())
     private val badgesChanged: () -> Unit = { refreshApps() }
     private val ticker = object : Runnable {
@@ -34,18 +43,19 @@ class LauncherActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pad = Ui.dp(this, 28)
 
-        val clock = TextClock(this).apply {
+        val customize = { startActivity(Intent(this, CustomizeActivity::class.java)) }
+        clock = TextClock(this).apply {
             format12Hour = "h:mm"
             format24Hour = "HH:mm"
-            textSize = 72f
             setTextColor(Ui.FG)
-            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+            setOnLongClickListener { customize(); true }
         }
-        val date = TextClock(this).apply {
+        date = TextClock(this).apply {
             format12Hour = "EEEE, MMMM d"
             format24Hour = "EEEE, MMMM d"
             textSize = 18f
-            setTextColor(Ui.MUTED)
+            setTextColor(0xFFD0D0D6.toInt())
+            setOnLongClickListener { customize(); true }
         }
         banner = Ui.text(this, "", 15f, Ui.BG, bold = true).apply {
             val p = Ui.dp(this@LauncherActivity, 12)
@@ -64,7 +74,7 @@ class LauncherActivity : Activity() {
                 setPadding(p / 2, p, p / 2, p)
                 setOnClickListener { onClick() }
             }
-        val bottomBar = LinearLayout(this).apply {
+        bottomBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             fun weight() = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             addView(bottomLink("Ask to unlock") {
@@ -78,8 +88,7 @@ class LauncherActivity : Activity() {
             }, weight())
         }
 
-        val root = Ui.column(this).apply {
-            setBackgroundColor(Ui.BG)
+        val content = Ui.column(this).apply {
             addView(clock, Ui.lp(this@LauncherActivity, 24).apply { leftMargin = pad; rightMargin = pad })
             addView(date, Ui.lp(this@LauncherActivity).apply { leftMargin = pad; rightMargin = pad })
             addView(banner, Ui.lp(this@LauncherActivity, 16).apply { leftMargin = pad; rightMargin = pad })
@@ -88,8 +97,51 @@ class LauncherActivity : Activity() {
             })
             addView(bottomBar, Ui.lp(this@LauncherActivity))
         }
-        Ui.padForSystemBars(root)
+        Ui.padForSystemBars(content)
+
+        // Layers: wallpaper photo, darkening layer for readability, then the content.
+        wallpaper = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+        dim = View(this)
+        val root = FrameLayout(this).apply {
+            addView(wallpaper, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            addView(dim, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            addView(content, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
         setContentView(root)
+    }
+
+    /** Applies the Customize settings: background, clock, date and alignment. */
+    private fun applyLook() {
+        val bg = Look.background(this)
+        val photo = if (bg == Look.BG_PHOTO) Look.wallpaperBitmap(this) else null
+        if (bg == Look.BG_PHONE) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            window.setBackgroundDrawable(ColorDrawable(Color.BLACK))
+        }
+        wallpaper.setImageBitmap(photo)
+        wallpaper.visibility = if (photo != null) View.VISIBLE else View.GONE
+        dim.setBackgroundColor(if (bg == Look.BG_BLACK) Color.TRANSPARENT else Look.dimColor(this))
+
+        val gravity = if (Look.centered(this)) Gravity.CENTER_HORIZONTAL else Gravity.START
+        val shadow = bg != Look.BG_BLACK
+        for (t in listOf<TextView>(clock, date)) {
+            t.gravity = gravity
+            if (shadow) t.setShadowLayer(10f, 0f, 1f, 0xCC000000.toInt()) else t.setShadowLayer(0f, 0f, 0f, 0)
+        }
+        clock.typeface = Look.clockTypeface(this)
+        clock.visibility = if (Look.clock(this) == "hidden") View.GONE else View.VISIBLE
+        clock.textSize = if (Look.clock(this) == "small") 48f else 72f
+        date.visibility = if (Look.showDate(this)) View.VISIBLE else View.GONE
+        date.typeface = Look.typeface(this)
+        for (i in 0 until bottomBar.childCount) {
+            (bottomBar.getChildAt(i) as? TextView)?.let {
+                it.setTextColor(if (shadow) 0xFFD0D0D6.toInt() else Ui.MUTED)
+                if (shadow) it.setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
+            }
+        }
     }
 
     override fun onResume() {
@@ -98,6 +150,7 @@ class LauncherActivity : Activity() {
         if (!Prefs.isArmed(this)) {
             startActivity(Intent(this, SetupActivity::class.java))
         }
+        applyLook()
         refreshApps()
         BadgeService.addListener(badgesChanged)
         handler.removeCallbacks(ticker)
@@ -135,17 +188,19 @@ class LauncherActivity : Activity() {
         for (app in apps) appList.addView(AppRow.build(this, app, compact, arrange))
 
         if (more.isNotEmpty()) {
+            val centered = Look.centered(this)
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
+                gravity = if (centered) Gravity.CENTER else Gravity.CENTER_VERTICAL
                 val p = Ui.dp(this@LauncherActivity, 14)
                 setPadding(0, p, 0, p)
                 setOnClickListener { startActivity(Intent(this@LauncherActivity, MoreAppsActivity::class.java)) }
                 setOnLongClickListener { arrange(); true }
             }
             row.addView(
-                Ui.text(this, "More apps (${more.size})  \u203A", if (compact) 20f else 22f, Ui.MUTED),
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                AppRow.styledLabel(this, "More apps (${more.size})  \u203A", Look.labelSp(this, true) * 0.9f, 0xFFB0B0B8.toInt()),
+                if (centered) LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             )
             val waiting = more.sumOf { BadgeService.counts[it.pkg] ?: 0 }
             if (waiting > 0) row.addView(Ui.countBadge(this, waiting))

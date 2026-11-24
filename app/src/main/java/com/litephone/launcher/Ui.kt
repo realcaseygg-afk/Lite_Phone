@@ -22,7 +22,8 @@ object Ui {
     const val SURFACE = 0xFF1C1C1E.toInt()
     const val FG = 0xFFFFFFFF.toInt()
     const val MUTED = 0xFF9A9AA0.toInt()
-    const val ACCENT = 0xFF7FB2FF.toInt()
+    /** Changes with the accent colour chosen in Customize. */
+    var ACCENT = 0xFF7FB2FF.toInt()
     const val WARN = 0xFFFFB74D.toInt()
     const val DANGER = 0xFFFF6B6B.toInt()
     const val GOOD = 0xFF66D19E.toInt()
