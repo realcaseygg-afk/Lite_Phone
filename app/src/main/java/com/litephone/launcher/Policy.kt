@@ -302,7 +302,8 @@ object Policy {
 
     private val pause = Deadline("pause_until", "pause_boot")
 
-    // Android's installer, allowed for a couple of minutes only when Lite Phone is updating itself.
+    // Android's app installer. Always allowed: installing is fine because a new app
+    // stays blocked until the passcode holder allows it.
     private val INSTALLERS = setOf(
         "com.google.android.packageinstaller", "com.android.packageinstaller",
         "com.samsung.android.packageinstaller",
@@ -339,7 +340,7 @@ object Policy {
         if (pkg in ALWAYS_ALLOWED) return true
         if (pkg in Prefs.allowedList(ctx)) return true
         if (pkg in systemHelpers(ctx)) return true
-        if (pkg in INSTALLERS && installerWindow.remainingMs(ctx) > 0) return true
+        if (pkg in INSTALLERS) return true
         if (WebPass.isActive(ctx) && pkg in WebPass.browsers(ctx)) return true
         // Samsung's own home app also draws the recent-apps screen and swipe-home
         // animations. While Lite Phone is the Home app, let those show; anything
