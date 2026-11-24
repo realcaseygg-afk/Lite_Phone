@@ -65,6 +65,7 @@ class LauncherActivity : Activity() {
         appList = Ui.column(this)
         scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
             addView(appList)
         }
         fun bottomLink(label: String, onClick: () -> Unit) =
@@ -176,36 +177,46 @@ class LauncherActivity : Activity() {
 
     private fun refreshApps() {
         appList.removeAllViews()
-        val apps = Policy.homeEntries(this)
-        val more = Policy.moreEntries(this)
-        if (apps.isEmpty() && more.isEmpty()) {
+        val categories = Policy.categories(this)
+        if (categories.isEmpty()) {
             appList.addView(Ui.text(this, "No apps yet. Ask the passcode holder to add some.", 18f, Ui.MUTED))
             return
         }
-        // Slightly smaller rows once the list gets long, so more fit on screen.
-        val compact = apps.size > 8
         val arrange = { startActivity(Intent(this, ArrangeActivity::class.java)) }
-        for (app in apps) appList.addView(AppRow.build(this, app, compact, arrange))
-
-        if (more.isNotEmpty()) {
-            val centered = Look.centered(this)
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = if (centered) Gravity.CENTER else Gravity.CENTER_VERTICAL
-                val p = Ui.dp(this@LauncherActivity, 14)
-                setPadding(0, p, 0, p)
-                setOnClickListener { startActivity(Intent(this@LauncherActivity, MoreAppsActivity::class.java)) }
-                setOnLongClickListener { arrange(); true }
-            }
-            row.addView(
-                AppRow.styledLabel(this, "More apps (${more.size})  \u203A", Look.labelSp(this, true) * 0.9f, 0xFFB0B0B8.toInt()),
-                if (centered) LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            )
-            val waiting = more.sumOf { BadgeService.counts[it.pkg] ?: 0 }
-            if (waiting > 0) row.addView(Ui.countBadge(this, waiting))
-            appList.addView(row)
+        for (cat in categories) {
+            appList.addView(categoryRow(cat) {
+                startActivity(Intent(this, CategoryActivity::class.java).putExtra(CategoryActivity.EXTRA_NAME, cat.name))
+            }.apply { setOnLongClickListener { arrange(); true } })
         }
+    }
+
+    /** One category line: name, a few of its apps underneath, and a count of new notifications. */
+    private fun categoryRow(cat: Policy.Category, onClick: () -> Unit): View {
+        val centered = Look.centered(this)
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = if (centered) Gravity.CENTER else Gravity.CENTER_VERTICAL
+            val p = Ui.dp(this@LauncherActivity, 11)
+            setPadding(0, p, 0, p)
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+        val names = cat.apps.take(3).joinToString(", ") { it.label } + if (cat.apps.size > 3) ", \u2026" else ""
+        val texts = Ui.column(this).apply {
+            if (centered) gravity = Gravity.CENTER_HORIZONTAL
+            addView(AppRow.styledLabel(this@LauncherActivity, cat.name, Look.labelSp(this@LauncherActivity, false)))
+            addView(AppRow.styledLabel(this@LauncherActivity, names, 13f, 0xFFB0B0B8.toInt()))
+        }
+        row.addView(
+            texts,
+            if (centered) LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        )
+        val waiting = cat.apps.sumOf { BadgeService.counts[it.pkg] ?: 0 }
+        if (waiting > 0) row.addView(Ui.countBadge(this, waiting), LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { leftMargin = Ui.dp(this@LauncherActivity, 10) })
+        return row
     }
 
     private fun updateBanner() {

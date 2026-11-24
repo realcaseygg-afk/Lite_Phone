@@ -70,14 +70,41 @@ object Prefs {
         setAllowedList(ctx, list)
     }
 
-    /** Allowed apps listed under "More apps" instead of on the home screen. */
+    /** Legacy (builds 4–9 had a "More apps" list); kept so older saved data still reads. */
     fun moreSet(ctx: Context): Set<String> =
         (get(ctx).getString(KEY_MORE, null) ?: "").split(',').filter { it.isNotBlank() }.toSet()
 
-    fun setOnHome(ctx: Context, pkg: String, onHome: Boolean) {
-        val more = moreSet(ctx).toMutableSet()
-        if (onHome) more.remove(pkg) else more.add(pkg)
-        get(ctx).edit().putString(KEY_MORE, more.joinToString(",")).apply()
+
+    // ---- Home screen categories ----
+
+    private const val KEY_CATEGORY_ORDER = "category_order"
+    private const val CATEGORY_PREFIX = "category:"
+
+    /** Category the user moved this app into, if any. */
+    fun categoryOverride(ctx: Context, pkg: String): String? =
+        get(ctx).getString(CATEGORY_PREFIX + pkg, null)?.takeIf { it in Policy.CATEGORY_NAMES }
+
+    fun setCategory(ctx: Context, pkg: String, category: String) {
+        get(ctx).edit().putString(CATEGORY_PREFIX + pkg, category).apply()
+    }
+
+    /** All category names in the order shown on the home screen. */
+    fun categoryOrder(ctx: Context): List<String> {
+        val saved = (get(ctx).getString(KEY_CATEGORY_ORDER, null) ?: "")
+            .split(',').filter { it in Policy.CATEGORY_NAMES }
+        return (saved + Policy.CATEGORY_NAMES).distinct()
+    }
+
+    fun moveCategory(ctx: Context, name: String, up: Boolean, visible: List<String>) {
+        val i = visible.indexOf(name)
+        val j = if (up) i - 1 else i + 1
+        if (i < 0 || j !in visible.indices) return
+        val order = categoryOrder(ctx).toMutableList()
+        val a = order.indexOf(name)
+        val b = order.indexOf(visible[j])
+        order[a] = visible[j]
+        order[b] = name
+        get(ctx).edit().putString(KEY_CATEGORY_ORDER, order.joinToString(",")).apply()
     }
 
     /** Swaps two apps' places in the home screen order. */

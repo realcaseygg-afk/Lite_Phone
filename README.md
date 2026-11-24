@@ -4,7 +4,7 @@ A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these 
 
 **Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Canvas · Duo Mobile**
 
-These are allowed too, under **More apps** (one tap from the home screen):
+These are allowed too:
 
 - **Files and documents:** Microsoft 365, Word, Excel, PowerPoint, OneNote, OneDrive, Google Drive, Docs, Sheets, Slides, Adobe Acrobat
 - **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Samsung Wallet, Google Wallet
@@ -12,7 +12,6 @@ These are allowed too, under **More apps** (one tap from the home screen):
 - **Food:** DoorDash, Uber Eats, Grubhub, Instacart, Starbucks, Chick-fil-A, McDonald's, Chipotle, Domino's, Pizza Hut, Papa John's, Taco Bell, Panera, Dunkin', Subway, Wendy's, Burger King, Kroger, Publix and Safeway
 - **Shopping:** Amazon, Walmart, Target, Costco, Sam's Club, eBay, Etsy, Best Buy, Home Depot, Lowe's, IKEA, Kohl's, Nike, CVS, Walgreens and Shop
 
-More apps is grouped into these sections.
 
 Apps on these lists that aren't installed yet show up as soon as they're installed.
 
@@ -22,8 +21,10 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 ## Home screen
 
+The home screen lists **categories**: Phone & Messages, School, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
+
 - **Count badges** next to apps show missed calls, unread texts and other notifications. Turn this on once in the protection checklist.
-- **Arrange:** long-press any app to reorder the home screen or move apps between Home and More apps. This doesn't need the passcode, because it can't change which apps are allowed.
+- **Arrange:** long-press a category or an app to reorder categories, reorder apps within a category, or move an app to a different category. This doesn't need the passcode, because it can't change which apps are allowed.
 - **Options** (bottom of the home screen) opens Customize, Arrange, My use and Updates.
 - **Customize:** long-press the clock, or use Options, to change the look:
   - **Background:** black, the phone's wallpaper, or a photo, with an option to darken it so text stays readable

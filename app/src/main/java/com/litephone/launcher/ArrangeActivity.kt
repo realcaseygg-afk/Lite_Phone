@@ -1,13 +1,15 @@
 package com.litephone.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.LinearLayout
 
 /**
- * Reorder the home screen and choose which allowed apps sit on it.
- * No passcode needed: this never changes which apps are allowed.
+ * Reorder the home screen categories, reorder apps inside each one, and move
+ * apps between categories. No passcode needed: this never changes which apps are allowed.
  */
 class ArrangeActivity : Activity() {
 
@@ -21,60 +23,79 @@ class ArrangeActivity : Activity() {
             val p = Ui.dp(this@ArrangeActivity, 24)
             setPadding(p, p, p, p)
         }
-        c.addView(Ui.text(this, "Arrange home screen", 28f, bold = true))
+        c.addView(Ui.text(this, "Arrange", 28f, bold = true))
         c.addView(Ui.text(
             this,
-            "Use the arrows to change the order. Apps in More apps are still allowed, just one tap away.",
+            "Use the arrows to change the order. \"Move\" puts an app in a different category.",
             15f, Ui.MUTED
         ), Ui.lp(this, 8))
 
-        val home = Policy.homeEntries(this)
-        c.addView(Ui.text(this, "HOME SCREEN", 13f, Ui.MUTED, bold = true), Ui.lp(this, 28))
-        home.forEachIndexed { i, app ->
-            val row = row(app)
+        val categories = Policy.categories(this)
+        val names = categories.map { it.name }
+
+        // Category order
+        c.addView(Ui.text(this, "CATEGORY ORDER", 13f, Ui.MUTED, bold = true), Ui.lp(this, 28))
+        categories.forEachIndexed { i, cat ->
+            val row = row(cat.name, null, 18f)
             if (i > 0) row.addView(Ui.smallButton(this, "↑") {
-                Prefs.swap(this, app.pkg, home[i - 1].pkg); render()
+                Prefs.moveCategory(this, cat.name, up = true, visible = names); render()
             }, buttonLp())
-            if (i < home.size - 1) row.addView(Ui.smallButton(this, "↓") {
-                Prefs.swap(this, app.pkg, home[i + 1].pkg); render()
-            }, buttonLp())
-            row.addView(Ui.smallButton(this, "To More", Ui.MUTED) {
-                Prefs.setOnHome(this, app.pkg, false); render()
+            if (i < categories.size - 1) row.addView(Ui.smallButton(this, "↓") {
+                Prefs.moveCategory(this, cat.name, up = false, visible = names); render()
             }, buttonLp())
             c.addView(row, Ui.lp(this, 4))
         }
 
-        val more = Policy.moreEntries(this)
-        if (more.isNotEmpty()) {
-            c.addView(Ui.text(this, "MORE APPS", 13f, Ui.MUTED, bold = true), Ui.lp(this, 28))
-            for (app in more) {
-                val row = row(app)
-                row.addView(Ui.smallButton(this, "To Home") {
-                    Prefs.setOnHome(this, app.pkg, true); render()
+        // Apps inside each category
+        for (cat in categories) {
+            c.addView(Ui.text(this, cat.name.uppercase(), 13f, Ui.MUTED, bold = true), Ui.lp(this, 28))
+            cat.apps.forEachIndexed { i, app ->
+                val row = row(app.label, app, 17f)
+                if (i > 0) row.addView(Ui.smallButton(this, "↑") {
+                    Prefs.swap(this, app.pkg, cat.apps[i - 1].pkg); render()
                 }, buttonLp())
+                if (i < cat.apps.size - 1) row.addView(Ui.smallButton(this, "↓") {
+                    Prefs.swap(this, app.pkg, cat.apps[i + 1].pkg); render()
+                }, buttonLp())
+                row.addView(Ui.smallButton(this, "Move", Ui.MUTED) { chooseCategory(app, cat.name) }, buttonLp())
                 c.addView(row, Ui.lp(this, 4))
             }
         }
 
         c.addView(Ui.button(this, "Customize look", Ui.SURFACE, Ui.ACCENT) {
-            startActivity(android.content.Intent(this, CustomizeActivity::class.java))
-        }, Ui.lp(this, 24))
+            startActivity(Intent(this, CustomizeActivity::class.java))
+        }, Ui.lp(this, 28))
         c.addView(Ui.button(this, "Done", Ui.SURFACE) { finish() }, Ui.lp(this, 12))
         Ui.showScrolling(this, c)
     }
 
-    private fun row(app: Policy.AppEntry): LinearLayout {
+    private fun chooseCategory(app: Policy.AppEntry, current: String) {
+        val options = Policy.CATEGORY_NAMES.toTypedArray()
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle("Move ${app.label} to")
+            .setSingleChoiceItems(options, options.indexOf(current)) { dialog, which ->
+                Prefs.setCategory(this, app.pkg, options[which])
+                dialog.dismiss()
+                render()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun row(label: String, app: Policy.AppEntry?, sp: Float): LinearLayout {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             val p = Ui.dp(this@ArrangeActivity, 4)
             setPadding(0, p, 0, p)
         }
-        val size = Ui.dp(this, 32)
-        row.addView(ImageView(this).apply { setImageDrawable(app.icon) }, LinearLayout.LayoutParams(size, size))
+        if (app != null) {
+            val size = Ui.dp(this, 32)
+            row.addView(ImageView(this).apply { setImageDrawable(app.icon) }, LinearLayout.LayoutParams(size, size))
+        }
         row.addView(
-            Ui.text(this, app.label, 17f).apply {
-                setPadding(Ui.dp(this@ArrangeActivity, 12), 0, Ui.dp(this@ArrangeActivity, 4), 0)
+            Ui.text(this, label, sp).apply {
+                setPadding(if (app != null) Ui.dp(this@ArrangeActivity, 12) else 0, 0, Ui.dp(this@ArrangeActivity, 4), 0)
                 isSingleLine = true
             },
             LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)

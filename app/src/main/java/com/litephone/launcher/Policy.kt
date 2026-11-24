@@ -173,20 +173,57 @@ object Policy {
         "com.shopify.arrive",                           // Shop (package tracking)
     )
 
-    /** Sections used on the More apps screen. */
-    val CATEGORIES: List<Pair<String, List<String>>> by lazy {
-        listOf(
-            "Files and documents" to FILES_APPS,
-            "Everyday" to EVERYDAY_APPS,
-            "Banking and money" to BANKING_APPS,
-            "Food" to FOOD_APPS,
-            "Shopping" to SHOPPING_APPS,
-        )
+    // ---- Home screen categories ------------------------------------------------
+
+    const val OTHER = "Other"
+
+    /** Default category order on the home screen. */
+    val CATEGORY_NAMES = listOf(
+        "Phone & Messages", "School", "AI", "Music & Books", "Camera & Photos",
+        "Banking & Money", "Food", "Shopping", "Everyday", OTHER,
+    )
+
+    /** Where each known app goes. The first category listed for an app wins. */
+    private val BUILTIN_CATEGORY: Map<String, String> by lazy {
+        val m = LinkedHashMap<String, String>()
+        fun put(cat: String, pkgs: List<String>) = pkgs.forEach { m.putIfAbsent(it, cat) }
+        put("Phone & Messages", PHONE + MESSAGES + listOf(
+            "com.microsoft.office.outlook", "com.google.android.gm",
+            "com.samsung.android.app.contacts", "com.google.android.contacts", "com.android.contacts",
+        ))
+        put("AI", listOf("com.anthropic.claude", "com.openai.chatgpt"))
+        put("Music & Books", listOf("com.spotify.music", "com.audible.application"))
+        put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
+        put("School", listOf(
+            "com.instructure.candroid", "com.duosecurity.duomobile", "com.azure.authenticator",
+            "com.google.android.apps.authenticator2", "com.microsoft.teams", "us.zoom.videomeetings",
+            "com.google.android.apps.classroom", "com.quizlet.quizletandroid",
+        ) + FILES_APPS)
+        put("Banking & Money", BANKING_APPS + listOf("com.samsung.android.spay", "com.google.android.apps.walletnfcrefapp"))
+        put("Food", FOOD_APPS)
+        put("Shopping", SHOPPING_APPS)
+        put("Everyday", EVERYDAY_APPS + listOf(SETTINGS, "com.ubercab", "me.lyft.android"))
+        m
     }
 
-    fun categoryOf(app: AppEntry): String =
-        CATEGORIES.firstOrNull { app.pkg in it.second }?.first
-            ?: if (looksLikeBanking(app)) "Banking and money" else "Other"
+    fun categoryOf(ctx: Context, app: AppEntry): String {
+        Prefs.categoryOverride(ctx, app.pkg)?.let { return it }
+        BUILTIN_CATEGORY[app.pkg]?.let { return it }
+        if (app.pkg in systemHelpers(ctx)) return "Phone & Messages" // the default phone app
+        if (looksLikeBanking(app)) return "Banking & Money"
+        return OTHER
+    }
+
+    class Category(val name: String, val apps: List<AppEntry>)
+
+    /** Non-empty categories in the user's order; apps inside keep the allowed-list order. */
+    fun categories(ctx: Context): List<Category> {
+        val groups = allowedEntries(ctx).groupBy { categoryOf(ctx, it) }
+        return Prefs.categoryOrder(ctx).mapNotNull { name -> groups[name]?.let { Category(name, it) } }
+    }
+
+    fun appsIn(ctx: Context, category: String): List<AppEntry> =
+        allowedEntries(ctx).filter { categoryOf(ctx, it) == category }
 
     private val BANK_WORDS = Regex("\\b(bank|banking|credit union|fcu|cu|federal|financial|savings)\\b")
 
@@ -296,10 +333,11 @@ object Policy {
         if (pkg in Prefs.allowedList(ctx)) return true
         if (pkg in systemHelpers(ctx)) return true
         if (pkg in INSTALLERS && installerWindow.remainingMs(ctx) > 0) return true
-        // The recent-apps screen belongs to the stock launcher on Samsung; let it
-        // show (anything opened from it is still checked).
-        if (className != null && className.contains("Recents", ignoreCase = true) &&
-            pkg in homePackages(ctx)
+        // Samsung's own home app also draws the recent-apps screen and swipe-home
+        // animations. While Lite Phone is the Home app, let those show; anything
+        // opened from them is still checked. (Bouncing them caused black flashes.)
+        if (pkg in homePackages(ctx) &&
+            (isDefaultHome(ctx) || (className != null && className.contains("Recents", ignoreCase = true)))
         ) return true
         return false
     }
@@ -375,17 +413,9 @@ object Policy {
         return AppEntry(pkg, pm.getApplicationLabel(info).toString(), pm.getApplicationIcon(info), intent)
     }
 
-    fun homeEntries(ctx: Context): List<AppEntry> {
-        val more = Prefs.moreSet(ctx)
-        return Prefs.allowedList(ctx).filter { it !in more }.mapNotNull { entryFor(ctx, it) }
-    }
-
-    /** Allowed apps kept off the home screen, alphabetical. */
-    fun moreEntries(ctx: Context): List<AppEntry> {
-        val more = Prefs.moreSet(ctx)
-        return Prefs.allowedList(ctx).filter { it in more }.mapNotNull { entryFor(ctx, it) }
-            .sortedBy { it.label.lowercase() }
-    }
+    /** Every allowed app that's installed, in the allowed-list order. */
+    fun allowedEntries(ctx: Context): List<AppEntry> =
+        Prefs.allowedList(ctx).mapNotNull { entryFor(ctx, it) }
 
     /** Every app that has an icon in the normal app drawer. */
     fun launchableApps(ctx: Context): List<AppEntry> {

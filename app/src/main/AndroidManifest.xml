@@ -54,7 +54,7 @@
             android:excludeFromRecents="true"
             android:exported="false" />
         <activity
-            android:name=".MoreAppsActivity"
+            android:name=".CategoryActivity"
             android:excludeFromRecents="true"
             android:exported="false" />
         <activity
