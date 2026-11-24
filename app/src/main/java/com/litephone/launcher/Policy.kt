@@ -59,6 +59,9 @@ object Policy {
         "com.android.cellbroadcastreceiver",
         "com.google.android.cellbroadcastreceiver",
         "com.samsung.android.biometrics.app.setting",
+        "com.samsung.android.samsungpass",              // Samsung Pass (autofill and passkeys)
+        "com.samsung.android.samsungpassautofill",
+        "com.samsung.android.authfw",
         "com.google.android.gms",
         "com.android.providers.media.module",
         "com.google.android.providers.media.module",
@@ -196,7 +199,7 @@ object Policy {
         put("AI", listOf("com.anthropic.claude", "com.openai.chatgpt"))
         put("Music & Books", listOf("com.spotify.music", "com.audible.application"))
         put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
-        put("Sign-in & Security", AUTHENTICATOR_APPS)
+        put("Sign-in & Security", AUTHENTICATOR_APPS + PASSWORD_MANAGERS)
         put("Notes & Tasks", NOTES_APPS)
         put("School", listOf(
             "com.instructure.candroid", "com.microsoft.teams", "us.zoom.videomeetings",
@@ -212,7 +215,12 @@ object Policy {
     fun categoryOf(ctx: Context, app: AppEntry): String {
         Prefs.categoryOverride(ctx, app.pkg)?.let { return it }
         BUILTIN_CATEGORY[app.pkg]?.let { return it }
-        if (app.pkg in systemHelpers(ctx)) return "Phone & Messages" // the default phone app
+        val dialer = try {
+            ctx.getSystemService(TelecomManager::class.java)?.defaultDialerPackage
+        } catch (e: Exception) {
+            null
+        }
+        if (app.pkg == dialer) return "Phone & Messages"
         if (looksLikeBanking(app)) return "Banking & Money"
         return OTHER
     }
@@ -269,10 +277,23 @@ object Policy {
         "com.samsung.android.app.reminder",             // Samsung Reminder
     )
 
+    val PASSWORD_MANAGERS = listOf(
+        "com.x8bit.bitwarden",                          // Bitwarden
+        "com.onepassword.android",                      // 1Password
+        "com.lastpass.lpandroid",                       // LastPass
+        "com.dashlane",                                 // Dashlane
+        "proton.android.pass",                          // Proton Pass
+        "com.callpod.android_apps.keeper",              // Keeper
+        "com.nordpass.android.app",                     // NordPass
+        "io.enpass.app",                                // Enpass
+        "com.kunzisoft.keepass.free",                   // KeePassDX
+        "com.kunzisoft.keepass.libre",
+    )
+
     class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 9
+    const val DEFAULTS_VERSION = 10
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -282,6 +303,7 @@ object Policy {
         DefaultsUpdate(7, listOf("com.mainichinote.app"), inMoreApps = false),
         DefaultsUpdate(8, AUTHENTICATOR_APPS, inMoreApps = false),
         DefaultsUpdate(9, NOTES_APPS, inMoreApps = false),
+        DefaultsUpdate(10, PASSWORD_MANAGERS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -414,7 +436,7 @@ object Policy {
         )?.activityInfo?.packageName
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
-            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS).distinct()
+            BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS + PASSWORD_MANAGERS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly
@@ -433,6 +455,16 @@ object Policy {
         try {
             ctx.getSystemService(TelecomManager::class.java)?.defaultDialerPackage?.let { set.add(it) }
         } catch (e: Exception) { }
+        // The chosen autofill service and passkey/password providers, so their
+        // fingerprint or "pick a login" screens aren't closed mid-autofill.
+        for (key in listOf("autofill_service", "credential_service", "credential_service_primary")) {
+            try {
+                Settings.Secure.getString(ctx.contentResolver, key)
+                    ?.split(':')
+                    ?.mapNotNull { ComponentName.unflattenFromString(it)?.packageName }
+                    ?.forEach { set.add(it) }
+            } catch (e: Exception) { }
+        }
         helpersCache = set
         helpersAt = now
         return set

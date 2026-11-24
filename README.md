@@ -9,7 +9,7 @@ These are allowed too:
 - **Files and documents:** Microsoft 365, Word, Excel, PowerPoint, OneNote, OneDrive, Google Drive, Docs, Sheets, Slides, Adobe Acrobat
 - **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Samsung Wallet, Google Wallet
 - **Notes & Tasks:** Samsung Notes, OneNote, Google Keep, Notion, Evernote, Obsidian, Logseq, Simplenote, Standard Notes, Joplin, Squid, Nebo, Microsoft To Do, Todoist, TickTick and Samsung Reminder
-- **Sign-in & Security:** Duo, Microsoft Authenticator, Google Authenticator, Authy, Okta Verify, LastPass Authenticator, Bitwarden Authenticator, 2FAS, Aegis, Yubico Authenticator, Symantec VIP Access and Entrust Identity
+- **Sign-in & Security:** password managers (Bitwarden, 1Password, LastPass, Dashlane, Proton Pass, Keeper, NordPass, Enpass and KeePassDX), Duo, Microsoft Authenticator, Google Authenticator, Authy, Okta Verify, LastPass Authenticator, Bitwarden Authenticator, 2FAS, Aegis, Yubico Authenticator, Symantec VIP Access and Entrust Identity
 - **Banking and money:** Chase, Bank of America, Wells Fargo, Capital One, Citi, U.S. Bank, PNC, Truist, Discover, Amex, Ally, SoFi, Chime, Navy Federal, USAA, TD, Citizens, Fifth Third, Regions, KeyBank, Huntington, Venmo, PayPal, Cash App, Zelle, Credit Karma, Rocket Money, Fidelity, Schwab and Vanguard. Any other installed bank or credit union app is listed under **Suggested** in the passcode holder's app picker.
 - **Food:** DoorDash, Uber Eats, Grubhub, Instacart, Starbucks, Chick-fil-A, McDonald's, Chipotle, Domino's, Pizza Hut, Papa John's, Taco Bell, Panera, Dunkin', Subway, Wendy's, Burger King, Kroger, Publix and Safeway
 - **Shopping:** Amazon, Walmart, Target, Costco, Sam's Club, eBay, Etsy, Best Buy, Home Depot, Lowe's, IKEA, Kohl's, Nike, CVS, Walgreens and Shop
@@ -52,7 +52,7 @@ Open **⚙ Settings → 🔒 Passcode menu** and enter the passcode to:
 
 After 5 wrong passcode tries, entry locks for 30 seconds. Each further wrong try doubles the wait, up to 1 hour.
 
-These always keep working: Android's app installer (a newly installed app stays blocked until the passcode holder allows it), calls (including emergency calls), emergency alerts, the keyboard, contacts, alarms, permission pop-ups, Google sign-in, photo and file pickers, and the notification shade and quick settings.
+These always keep working: your chosen **autofill and passkey provider** (Samsung Pass, Google or a password manager), Android's app installer (a newly installed app stays blocked until the passcode holder allows it), calls (including emergency calls), emergency alerts, the keyboard, contacts, alarms, permission pop-ups, Google sign-in, photo and file pickers, and the notification shade and quick settings.
 
 ## Install on the S25+
 
