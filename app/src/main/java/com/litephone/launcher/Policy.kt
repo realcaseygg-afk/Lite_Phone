@@ -102,7 +102,6 @@ object Policy {
         "com.sec.android.app.myfiles",
         "com.sec.android.app.clockpackage",
         "com.google.android.apps.maps",
-        "com.samsung.android.spay",                     // Samsung Wallet
         "com.google.android.apps.walletnfcrefapp",      // Google Wallet
     )
 
@@ -298,10 +297,15 @@ object Policy {
         "com.kunzisoft.keepass.libre",
     )
 
-    class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
+    class DefaultsUpdate(
+        val version: Int,
+        val packages: List<String>,
+        val inMoreApps: Boolean,
+        val removed: List<String> = emptyList(),
+    )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 10
+    const val DEFAULTS_VERSION = 11
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -312,6 +316,9 @@ object Policy {
         DefaultsUpdate(8, AUTHENTICATOR_APPS, inMoreApps = false),
         DefaultsUpdate(9, NOTES_APPS, inMoreApps = false),
         DefaultsUpdate(10, PASSWORD_MANAGERS, inMoreApps = false),
+        // Samsung Wallet isn't used (Google Wallet is); blocking it also stops its swipe-up.
+        DefaultsUpdate(11, listOf("com.google.android.apps.walletnfcrefapp"), inMoreApps = false,
+            removed = listOf("com.samsung.android.spay")),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -344,7 +351,6 @@ object Policy {
         Suggestion("com.sec.android.app.myfiles", "Everyday", "Downloads and attachments"),
         Suggestion("com.sec.android.app.clockpackage", "Everyday", "Set alarms and timers (alarms ring either way)"),
         Suggestion("com.google.android.apps.maps", "Everyday", "Getting around"),
-        Suggestion("com.samsung.android.spay", "Everyday", "Tap to pay and student ID cards"),
         Suggestion("com.google.android.apps.walletnfcrefapp", "Everyday", "Tap to pay and student ID cards"),
         Suggestion("com.ubercab", "Everyday", "Rides"),
         Suggestion("me.lyft.android", "Everyday", "Rides"),

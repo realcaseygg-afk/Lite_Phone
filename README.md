@@ -7,7 +7,7 @@ A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these 
 These are allowed too:
 
 - **Files and documents:** Microsoft 365, Word, Excel, PowerPoint, OneNote, OneDrive, Google Drive, Docs, Sheets, Slides, Adobe Acrobat
-- **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Samsung Wallet, Google Wallet
+- **Everyday:** Calendar, Samsung Notes, Calculator, Gallery, My Files, Clock, Maps, Google Wallet
 - **Notes & Tasks:** Samsung Notes, OneNote, Google Keep, Notion, Evernote, Obsidian, Logseq, Simplenote, Standard Notes, Joplin, Squid, Nebo, Microsoft To Do, Todoist, TickTick and Samsung Reminder
 - **Sign-in & Security:** password managers (Bitwarden, 1Password, LastPass, Dashlane, Proton Pass, Keeper, NordPass, Enpass and KeePassDX), Duo, Microsoft Authenticator, Google Authenticator, Authy, Okta Verify, LastPass Authenticator, Bitwarden Authenticator, 2FAS, Aegis, Yubico Authenticator, Symantec VIP Access and Entrust Identity
 - **Banking and money:** Chase, Bank of America, Wells Fargo, Capital One, Citi, U.S. Bank, PNC, Truist, Discover, Amex, Ally, SoFi, Chime, Navy Federal, USAA, TD, Citizens, Fifth Third, Regions, KeyBank, Huntington, Venmo, PayPal, Cash App, Zelle, Credit Karma, Rocket Money, Fidelity, Schwab and Vanguard. Any other installed bank or credit union app is listed under **Suggested** in the passcode holder's app picker.
@@ -44,7 +44,7 @@ The home screen lists **categories**: Phone & Messages, School, Notes & Tasks, S
 Open **⚙ Settings → 🔒 Passcode menu** and enter the passcode to:
 
 - **Unlock all apps for 15 minutes or 1 hour.** Apps lock again on their own when time runs out.
-- **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
+- **Choose allowed apps.** Add or remove any app. A **Suggested** section lists school apps (Teams, Zoom, Office, Google Drive, authenticators and more) and everyday ones (Calendar, Notes, Gallery, Google Wallet and more) that are already installed. There's also a one-tap **Allow all school apps** button.
 - **Unlock all of Settings for 15 minutes**, including the locked pages.
 - **Web pass:** turn it on or off, and set its length (15, 30 or 60 minutes) and how many are allowed a day (1–3).
 - **Change the passcode.**

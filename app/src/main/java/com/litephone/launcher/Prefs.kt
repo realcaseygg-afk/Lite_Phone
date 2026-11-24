@@ -47,7 +47,7 @@ object Prefs {
             for (update in Policy.ADDED_IN_VERSION) {
                 if (update.version <= version) continue
                 val added = update.packages.filter { it !in list }
-                list = list + added
+                list = list + added - update.removed.toSet()
                 if (update.inMoreApps) more.addAll(added)
             }
             sp.edit()
