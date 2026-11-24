@@ -89,6 +89,8 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
      */
     private fun checkSettingsPage() {
         if (!Policy.isEnforcing(this)) return
+        // An update's confirmation can open "Install unknown apps" in Settings; don't back out of it.
+        if (Policy.installerWindowActive(this)) return
         val list = try {
             windows
         } catch (e: Exception) {

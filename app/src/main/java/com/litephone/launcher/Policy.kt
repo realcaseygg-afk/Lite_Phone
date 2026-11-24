@@ -309,6 +309,9 @@ object Policy {
 
     fun allowInstallerBriefly(ctx: Context) = installerWindow.set(ctx, 2 * 60_000L)
 
+    /** True for 2 minutes after an update asks for confirmation. */
+    fun installerWindowActive(ctx: Context) = installerWindow.remainingMs(ctx) > 0
+
     /** True when apps that aren't allowed should be closed right now. */
     fun isEnforcing(ctx: Context): Boolean =
         Prefs.isArmed(ctx) && Passcode.isSet(ctx) && pause.remainingMs(ctx) == 0L

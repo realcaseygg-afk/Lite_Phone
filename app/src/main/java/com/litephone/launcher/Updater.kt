@@ -125,8 +125,18 @@ class InstallResultReceiver : BroadcastReceiver() {
             }
             PackageInstaller.STATUS_SUCCESS -> { } // Lite Phone restarts as the new version
             else -> {
+                val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "unknown error"
-                Toast.makeText(ctx, "Update failed: $msg", Toast.LENGTH_LONG).show()
+                val help = when (status) {
+                    PackageInstaller.STATUS_FAILURE_ABORTED ->
+                        "The install was cancelled before it was confirmed. Try again and tap Install or Allow " +
+                            "if Android asks. If Samsung's Auto Blocker is on, turn it off first."
+                    PackageInstaller.STATUS_FAILURE_BLOCKED ->
+                        "Android blocked the install. Check Auto Blocker and Play Protect, then try again."
+                    PackageInstaller.STATUS_FAILURE_STORAGE -> "Not enough free space to install the update."
+                    else -> "Update failed: $msg"
+                }
+                Toast.makeText(ctx, help, Toast.LENGTH_LONG).show()
             }
         }
     }
