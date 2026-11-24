@@ -72,11 +72,40 @@ object Policy {
 
     const val SETTINGS = "com.android.settings"
 
+    val FILES_APPS = listOf(
+        "com.microsoft.office.officehubrow",            // Microsoft 365
+        "com.microsoft.office.word",
+        "com.microsoft.office.excel",
+        "com.microsoft.office.powerpoint",
+        "com.microsoft.office.onenote",
+        "com.microsoft.skydrive",                       // OneDrive
+        "com.google.android.apps.docs",                 // Google Drive
+        "com.google.android.apps.docs.editors.docs",
+        "com.google.android.apps.docs.editors.sheets",
+        "com.google.android.apps.docs.editors.slides",
+        "com.adobe.reader",                             // Adobe Acrobat
+    )
+    val EVERYDAY_APPS = listOf(
+        "com.samsung.android.calendar",
+        "com.google.android.calendar",
+        "com.samsung.android.app.notes",
+        "com.sec.android.app.popupcalculator",
+        "com.sec.android.gallery3d",
+        "com.sec.android.app.myfiles",
+        "com.sec.android.app.clockpackage",
+        "com.google.android.apps.maps",
+        "com.samsung.android.spay",                     // Samsung Wallet
+        "com.google.android.apps.walletnfcrefapp",      // Google Wallet
+    )
+
+    class DefaultsUpdate(val version: Int, val packages: List<String>, val inMoreApps: Boolean)
+
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 3
+    const val DEFAULTS_VERSION = 4
     val ADDED_IN_VERSION = listOf(
-        2 to listOf(SETTINGS),
-        3 to listOf("com.instructure.candroid", "com.duosecurity.duomobile"),
+        DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
+        DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
+        DefaultsUpdate(4, FILES_APPS + EVERYDAY_APPS, inMoreApps = true),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -190,7 +219,7 @@ object Policy {
             Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA), PackageManager.MATCH_DEFAULT_ONLY
         )?.activityInfo?.packageName
 
-        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS).distinct()
+        return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly
@@ -235,8 +264,17 @@ object Policy {
         return AppEntry(pkg, pm.getApplicationLabel(info).toString(), pm.getApplicationIcon(info), intent)
     }
 
-    fun homeEntries(ctx: Context): List<AppEntry> =
-        Prefs.allowedList(ctx).mapNotNull { entryFor(ctx, it) }
+    fun homeEntries(ctx: Context): List<AppEntry> {
+        val more = Prefs.moreSet(ctx)
+        return Prefs.allowedList(ctx).filter { it !in more }.mapNotNull { entryFor(ctx, it) }
+    }
+
+    /** Allowed apps kept off the home screen, alphabetical. */
+    fun moreEntries(ctx: Context): List<AppEntry> {
+        val more = Prefs.moreSet(ctx)
+        return Prefs.allowedList(ctx).filter { it in more }.mapNotNull { entryFor(ctx, it) }
+            .sortedBy { it.label.lowercase() }
+    }
 
     /** Every app that has an icon in the normal app drawer. */
     fun launchableApps(ctx: Context): List<AppEntry> {
@@ -256,6 +294,13 @@ object Policy {
             ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ) ?: return false
         val me = ComponentName(ctx, GuardService::class.java)
+        return enabled.split(':').any { ComponentName.unflattenFromString(it) == me }
+    }
+
+    fun hasNotificationAccess(ctx: Context): Boolean {
+        val enabled = Settings.Secure.getString(ctx.contentResolver, "enabled_notification_listeners")
+            ?: return false
+        val me = ComponentName(ctx, BadgeService::class.java)
         return enabled.split(':').any { ComponentName.unflattenFromString(it) == me }
     }
 

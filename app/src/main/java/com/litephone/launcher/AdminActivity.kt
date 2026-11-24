@@ -44,6 +44,9 @@ class AdminActivity : Activity() {
         if (paused) add("Lock now", Ui.ACCENT, Ui.BG) {
             Policy.lockNow(this); render()
         }
+        add("Texting unlock codes (${UnlockCodes.remaining(this)} left)") {
+            startActivity(Intent(this, UnlockCodesActivity::class.java))
+        }
         add("Choose allowed apps", top = 24) {
             startActivity(Intent(this, AllowedAppsActivity::class.java))
         }

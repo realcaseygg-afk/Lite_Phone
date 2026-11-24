@@ -12,6 +12,9 @@ object Prefs {
     private const val KEY_ALLOWED = "allowed"
     private const val KEY_DEFAULTS_VERSION = "defaults_version"
     private const val LEGACY_SETTINGS_ADDED = "settings_added_v2"
+    private const val KEY_MORE = "more_apps"
+    private const val KEY_HOLDER_NAME = "holder_name"
+    private const val KEY_HOLDER_PHONE = "holder_phone"
 
     fun get(ctx: Context): SharedPreferences =
         ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -29,8 +32,10 @@ object Prefs {
         val saved = sp.getString(KEY_ALLOWED, null)
         if (saved == null) {
             val defaults = Policy.defaultAllowedPackages(ctx)
+            val more = Policy.ADDED_IN_VERSION.filter { it.inMoreApps }.flatMap { it.packages }
             sp.edit()
                 .putString(KEY_ALLOWED, defaults.joinToString(","))
+                .putString(KEY_MORE, more.joinToString(","))
                 .putInt(KEY_DEFAULTS_VERSION, Policy.DEFAULTS_VERSION)
                 .apply()
             return defaults
@@ -40,11 +45,16 @@ object Prefs {
         val legacy = if (sp.getBoolean(LEGACY_SETTINGS_ADDED, false)) 2 else 1
         val version = sp.getInt(KEY_DEFAULTS_VERSION, legacy)
         if (version < Policy.DEFAULTS_VERSION) {
-            for ((v, pkgs) in Policy.ADDED_IN_VERSION) {
-                if (v > version) list = list + pkgs.filter { it !in list }
+            val more = moreSet(ctx).toMutableSet()
+            for (update in Policy.ADDED_IN_VERSION) {
+                if (update.version <= version) continue
+                val added = update.packages.filter { it !in list }
+                list = list + added
+                if (update.inMoreApps) more.addAll(added)
             }
             sp.edit()
                 .putString(KEY_ALLOWED, list.joinToString(","))
+                .putString(KEY_MORE, more.joinToString(","))
                 .putInt(KEY_DEFAULTS_VERSION, Policy.DEFAULTS_VERSION)
                 .apply()
         }
@@ -60,6 +70,37 @@ object Prefs {
         list.remove(pkg)
         if (allowed) list.add(pkg)
         setAllowedList(ctx, list)
+    }
+
+    /** Allowed apps listed under "More apps" instead of on the home screen. */
+    fun moreSet(ctx: Context): Set<String> =
+        (get(ctx).getString(KEY_MORE, null) ?: "").split(',').filter { it.isNotBlank() }.toSet()
+
+    fun setOnHome(ctx: Context, pkg: String, onHome: Boolean) {
+        val more = moreSet(ctx).toMutableSet()
+        if (onHome) more.remove(pkg) else more.add(pkg)
+        get(ctx).edit().putString(KEY_MORE, more.joinToString(",")).apply()
+    }
+
+    /** Swaps two apps' places in the home screen order. */
+    fun swap(ctx: Context, a: String, b: String) {
+        val list = allowedList(ctx).toMutableList()
+        val i = list.indexOf(a)
+        val j = list.indexOf(b)
+        if (i < 0 || j < 0) return
+        list[i] = b
+        list[j] = a
+        setAllowedList(ctx, list)
+    }
+
+    fun holderName(ctx: Context): String = get(ctx).getString(KEY_HOLDER_NAME, null) ?: ""
+    fun holderPhone(ctx: Context): String = get(ctx).getString(KEY_HOLDER_PHONE, null) ?: ""
+
+    fun setHolderContact(ctx: Context, name: String, phone: String) {
+        get(ctx).edit()
+            .putString(KEY_HOLDER_NAME, name.trim())
+            .putString(KEY_HOLDER_PHONE, phone.trim())
+            .apply()
     }
 }
 

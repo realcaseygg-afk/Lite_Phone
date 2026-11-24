@@ -2,8 +2,6 @@ package com.litephone.launcher
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
@@ -11,7 +9,6 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextClock
@@ -25,6 +22,7 @@ class LauncherActivity : Activity() {
     private lateinit var appList: LinearLayout
     private lateinit var scroll: ScrollView
     private val handler = Handler(Looper.getMainLooper())
+    private val badgesChanged: () -> Unit = { refreshApps() }
     private val ticker = object : Runnable {
         override fun run() {
             updateBanner()
@@ -59,11 +57,25 @@ class LauncherActivity : Activity() {
             isVerticalScrollBarEnabled = false
             addView(appList)
         }
-        val lock = Ui.text(this, "Lite Phone  🔒", 13f, Ui.MUTED).apply {
-            gravity = Gravity.CENTER
-            val p = Ui.dp(this@LauncherActivity, 14)
-            setPadding(p, p, p, p)
-            setOnClickListener { PinActivity.openAdmin(this@LauncherActivity) }
+        fun bottomLink(label: String, onClick: () -> Unit) =
+            Ui.text(this, label, 14f, Ui.MUTED).apply {
+                gravity = Gravity.CENTER
+                val p = Ui.dp(this@LauncherActivity, 14)
+                setPadding(p / 2, p, p / 2, p)
+                setOnClickListener { onClick() }
+            }
+        val bottomBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            fun weight() = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            addView(bottomLink("Ask to unlock") {
+                startActivity(Intent(this@LauncherActivity, RequestUnlockActivity::class.java))
+            }, weight())
+            addView(bottomLink("My use") {
+                startActivity(Intent(this@LauncherActivity, UsageActivity::class.java))
+            }, weight())
+            addView(bottomLink("\uD83D\uDD12 Passcode") {
+                PinActivity.openAdmin(this@LauncherActivity)
+            }, weight())
         }
 
         val root = Ui.column(this).apply {
@@ -74,7 +86,7 @@ class LauncherActivity : Activity() {
             addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
                 topMargin = Ui.dp(this@LauncherActivity, 24); leftMargin = pad; rightMargin = pad
             })
-            addView(lock, Ui.lp(this@LauncherActivity))
+            addView(bottomBar, Ui.lp(this@LauncherActivity))
         }
         Ui.padForSystemBars(root)
         setContentView(root)
@@ -87,12 +99,14 @@ class LauncherActivity : Activity() {
             startActivity(Intent(this, SetupActivity::class.java))
         }
         refreshApps()
+        BadgeService.addListener(badgesChanged)
         handler.removeCallbacks(ticker)
         handler.post(ticker)
     }
 
     override fun onPause() {
         super.onPause()
+        BadgeService.removeListener(badgesChanged)
         handler.removeCallbacks(ticker)
     }
 
@@ -110,38 +124,31 @@ class LauncherActivity : Activity() {
     private fun refreshApps() {
         appList.removeAllViews()
         val apps = Policy.homeEntries(this)
-        if (apps.isEmpty()) {
+        val more = Policy.moreEntries(this)
+        if (apps.isEmpty() && more.isEmpty()) {
             appList.addView(Ui.text(this, "No apps yet. Ask the passcode holder to add some.", 18f, Ui.MUTED))
             return
         }
-        val grey = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
         // Slightly smaller rows once the list gets long, so more fit on screen.
         val compact = apps.size > 8
-        val rowPad = Ui.dp(this, if (compact) 9 else 12)
-        val iconSize = Ui.dp(this, if (compact) 34 else 40)
-        val textSize = if (compact) 22f else 26f
-        for (app in apps) {
+        val arrange = { startActivity(Intent(this, ArrangeActivity::class.java)) }
+        for (app in apps) appList.addView(AppRow.build(this, app, compact, arrange))
+
+        if (more.isNotEmpty()) {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(0, rowPad, 0, rowPad)
-                isClickable = true
-                setOnClickListener {
-                    try {
-                        startActivity(app.intent)
-                    } catch (e: Exception) {
-                        Toast.makeText(this@LauncherActivity, "Couldn't open ${app.label}", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                val p = Ui.dp(this@LauncherActivity, 14)
+                setPadding(0, p, 0, p)
+                setOnClickListener { startActivity(Intent(this@LauncherActivity, MoreAppsActivity::class.java)) }
+                setOnLongClickListener { arrange(); true }
             }
-            val size = iconSize
-            row.addView(ImageView(this).apply {
-                setImageDrawable(app.icon)
-                colorFilter = grey
-            }, LinearLayout.LayoutParams(size, size))
-            row.addView(Ui.text(this, app.label, textSize).apply {
-                setPadding(Ui.dp(this@LauncherActivity, 20), 0, 0, 0)
-            })
+            row.addView(
+                Ui.text(this, "More apps (${more.size})  \u203A", if (compact) 20f else 22f, Ui.MUTED),
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+            val waiting = more.sumOf { BadgeService.counts[it.pkg] ?: 0 }
+            if (waiting > 0) row.addView(Ui.countBadge(this, waiting))
             appList.addView(row)
         }
     }

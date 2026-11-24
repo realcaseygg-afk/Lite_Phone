@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -64,6 +65,48 @@ object Ui {
         isClickable = true
         isFocusable = true
         setOnClickListener { onClick() }
+    }
+
+    fun smallButton(ctx: Context, label: String, fg: Int = ACCENT, onClick: () -> Unit): TextView =
+        text(ctx, label, 14f, fg, bold = true).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(ctx, 12), dp(ctx, 8), dp(ctx, 12), dp(ctx, 8))
+            background = RippleDrawable(
+                ColorStateList.valueOf(0x33FFFFFF), rounded(SURFACE, dp(ctx, 10).toFloat()), null
+            )
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+
+    fun input(ctx: Context, hint: String, type: Int): EditText = EditText(ctx).apply {
+        this.hint = hint
+        inputType = type
+        isSingleLine = true
+        textSize = 18f
+        setTextColor(FG)
+        setHintTextColor(MUTED)
+        background = rounded(SURFACE, dp(ctx, 12).toFloat())
+        val p = dp(ctx, 14)
+        setPadding(p, p, p, p)
+    }
+
+    /** Small rounded count, e.g. missed calls. */
+    fun countBadge(ctx: Context, count: Int): TextView =
+        text(ctx, if (count > 99) "99+" else count.toString(), 13f, BG, bold = true).apply {
+            gravity = Gravity.CENTER
+            minWidth = dp(ctx, 24)
+            setPadding(dp(ctx, 7), dp(ctx, 2), dp(ctx, 7), dp(ctx, 2))
+            background = rounded(ACCENT, dp(ctx, 12).toFloat())
+        }
+
+    fun formatDuration(ms: Long): String {
+        val minutes = ms / 60_000
+        return when {
+            minutes < 1 -> "<1 min"
+            minutes < 60 -> "$minutes min"
+            minutes % 60 == 0L -> "${minutes / 60} h"
+            else -> "${minutes / 60} h ${minutes % 60} min"
+        }
     }
 
     fun column(ctx: Context): LinearLayout = LinearLayout(ctx).apply {

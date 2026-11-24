@@ -39,6 +39,13 @@ object Passcode {
         val salt = sp.getString(KEY_SALT, null) ?: return false
         val hash = sp.getString(KEY_HASH, null) ?: return false
         val ok = MessageDigest.isEqual(derive(pin, unb64(salt)), unb64(hash))
+        recordAttempt(ctx, ok)
+        return ok
+    }
+
+    /** Wrong passcodes and wrong texted unlock codes share one lockout. */
+    fun recordAttempt(ctx: Context, ok: Boolean) {
+        val sp = Prefs.get(ctx)
         if (ok) {
             sp.edit().putInt(KEY_FAILS, 0).apply()
             lockout.clear(ctx)
@@ -47,7 +54,6 @@ object Passcode {
             sp.edit().putInt(KEY_FAILS, fails).apply()
             if (fails >= FREE_TRIES) lockout.set(ctx, lockoutLength(fails))
         }
-        return ok
     }
 
     /** Milliseconds until another guess is allowed (0 = allowed now). */

@@ -145,6 +145,7 @@ class GuardService : AccessibilityService(), SharedPreferences.OnSharedPreferenc
     }
 
     private fun block(pkg: String) {
+        BlockLog.record(this, pkg)
         goHome()
         toast("${labelOf(pkg)} isn't allowed on Lite Phone")
         // Some apps open a second screen right after the first; catch that too.

@@ -103,6 +103,20 @@ class SetupActivity : Activity() {
             Policy.isUninstallProtected(this), "Turn on"
         ) { requestDeviceAdmin() }
 
+        step(
+            c, n++, "Show missed calls and unread texts (optional)",
+            "On the next screen, tap Lite Phone and allow notification access. " +
+                "It's only used to show counts next to apps on the home screen.",
+            Policy.hasNotificationAccess(this), "Open notification access"
+        ) { openSettings(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+
+        step(
+            c, n++, "Turn on usage tracking (optional)",
+            "On the next screen, tap Lite Phone and allow usage data access. " +
+                "This powers \"My use\" (screen time) on the home screen. It stays on the phone.",
+            UsageReport.hasAccess(this), "Open usage access"
+        ) { openSettings(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+
         if (passcodeHolderMode) {
             c.addView(Ui.button(this, "Done", Ui.SURFACE) { finish() }, Ui.lp(this, 32))
         } else {
