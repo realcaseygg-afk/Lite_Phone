@@ -194,7 +194,7 @@ object Policy {
     private val BUILTIN_CATEGORY: Map<String, String> by lazy {
         val m = LinkedHashMap<String, String>()
         fun put(cat: String, pkgs: List<String>) = pkgs.forEach { m.putIfAbsent(it, cat) }
-        put("Phone & Messages", PHONE + MESSAGES + listOf(
+        put("Phone & Messages", PHONE + MESSAGES + VOICEMAIL_APPS + listOf(
             "com.microsoft.office.outlook", "com.google.android.gm",
             "com.samsung.android.app.contacts", "com.google.android.contacts", "com.android.contacts",
         ))
@@ -300,6 +300,14 @@ object Policy {
         "com.kunzisoft.keepass.libre",
     )
 
+    /** Visual voicemail: Samsung's and the carriers' apps. */
+    val VOICEMAIL_APPS = listOf(
+        "com.samsung.vvm",                              // Samsung Visual Voicemail
+        "com.att.mobile.android.vvm",                   // AT&T Visual Voicemail
+        "com.tmobile.vvm.application",                  // T-Mobile Visual Voicemail
+        "com.motricity.verizon.ssodownloadable",        // Verizon Voicemail
+    )
+
     /** Apps you made yourself. */
     val MY_APPS = listOf(
         "com.mainichinote.app",                         // 毎日ノート
@@ -314,7 +322,7 @@ object Policy {
     )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 14
+    const val DEFAULTS_VERSION = 15
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -331,6 +339,7 @@ object Policy {
         DefaultsUpdate(12, listOf("com.amazon.kindle"), inMoreApps = false),
         DefaultsUpdate(13, Weather.WEATHER_APPS, inMoreApps = false),
         DefaultsUpdate(14, MY_APPS, inMoreApps = false),
+        DefaultsUpdate(15, VOICEMAIL_APPS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -463,7 +472,7 @@ object Policy {
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
             BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS + PASSWORD_MANAGERS +
-            Weather.WEATHER_APPS).distinct()
+            Weather.WEATHER_APPS + VOICEMAIL_APPS).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly

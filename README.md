@@ -2,7 +2,7 @@
 
 A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these apps open:
 
-**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · Kindle · My Apps: 毎日ノート (Japanese notebook) and The Scholar's Garden**
+**Phone · Messages · Visual Voicemail · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · Kindle · My Apps: 毎日ノート (Japanese notebook) and The Scholar's Garden**
 
 These are allowed too:
 
@@ -33,7 +33,7 @@ The home screen has **two pages**. Swipe sideways between them; the dots at the 
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
 - **Quiet notifications:** notifications from **food apps are always cleared**, even during an unlock. Notifications from blocked apps are cleared automatically too, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. Clearing blocked apps is paused during an unlock. Both use the same notification access as the count bubbles.
-- **Count bubbles** show only missed calls and unread texts. They appear on the Phone and Messages apps and on their category. Turn this on once in the protection checklist.
+- **Count bubbles** show only missed calls, voicemails and unread texts. They appear on the Phone and Messages apps and on their category. Turn this on once in the protection checklist.
 - **Arrange** (⚙ Settings → Arrange, or long-press a category or app): drag the **≡** handle to reorder categories. Tap a category to drag its apps into order, and use **Move** to put an app in another category, or in a **new category** you name. The list scrolls by itself when you drag near the edge. This doesn't need the passcode, because it can't change which apps are allowed.
 - **⚙ Settings** (bottom of the home screen) has My use, Customize look, Arrange, Updates and, behind the passcode, **Add or remove apps** and the **passcode menu**.
 - **Customize:** long-press the clock, or use ⚙ Settings, to change the look:

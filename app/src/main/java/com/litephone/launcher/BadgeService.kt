@@ -70,7 +70,7 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
             null
         }
         // Count bubbles are only for missed calls and texts.
-        val countable = (Policy.PHONE + Policy.MESSAGES + listOfNotNull(dialer, sms)).toSet()
+        val countable = (Policy.PHONE + Policy.MESSAGES + Policy.VOICEMAIL_APPS + listOfNotNull(dialer, sms)).toSet()
         val enforcing = Policy.isEnforcing(this)
         val map = HashMap<String, Int>()
         for (sbn in active) {
