@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Approximate location, only for the weather next to the clock. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Calendar events on the Agenda page. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- For "My use" screen time. Granted by the passcode holder in Settings. -->
     <uses-permission
@@ -63,6 +65,11 @@
             android:name=".ArrangeActivity"
             android:excludeFromRecents="true"
             android:exported="false" />
+        <activity
+            android:name=".CanvasSetupActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".CustomizeActivity"
             android:excludeFromRecents="true"

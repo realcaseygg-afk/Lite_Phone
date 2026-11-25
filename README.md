@@ -23,7 +23,11 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 ## Home screen
 
-The home screen lists **categories**: Phone & Messages, My Apps, School, Notes & Tasks, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
+The home screen has **two pages**. Swipe sideways between them; the dots at the bottom show where you are.
+
+**Page 1 (apps):** the clock and weather, the search bar, **category tiles** and a **dock** of your four most-used apps, just above ⚙ Settings. The tiles are Phone & Messages, My Apps, School, Notes & Tasks, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other, each showing a few app icons. Tap a tile to see its apps. Only categories with apps in them are shown. The dock is worked out from **My use** over the last 14 days and updates hourly.
+
+**Page 2 (Agenda):** the next 7 days of **calendar events** (from the phone's calendars, after you allow access once) and **Canvas assignments** that are due and not yet submitted, in one timeline. Tap an item to open it in Calendar or Canvas. To connect Canvas, go to **⚙ Settings → Connect Canvas to the Agenda** and enter your school's Canvas address and an access token you make in Canvas under *Account → Settings → New access token*. The token stays on the phone and is only sent to your school's Canvas.
 
 - **Weather by the clock:** the current temperature and conditions, today's high and low, and your town. Tap it once to allow approximate location. After that, tapping refreshes the weather and opens your weather app (Samsung Weather, The Weather Channel or AccuWeather, all allowed under Everyday), and long-pressing opens Customize. Data comes from [Open-Meteo](https://open-meteo.com), which is free and needs no account. Only a location rounded to about 1 km is sent. In **Customize** you can pick a city instead of using your location, choose °F or °C, or hide the weather.
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
@@ -118,6 +122,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `WebPass` | Time-limited browser access: tracks the daily count and which apps are browsers |
 | `ReorderList`, `ArrangeActivity` | Drag-and-drop ordering of categories and apps, moving apps between categories, and custom categories |
 | `Weather` | Home screen weather from Open-Meteo, cached for 30 minutes, using a rounded location or a chosen city |
+| `Pager`, `Dock`, `Agenda`, `CanvasSetupActivity` | Two-page home: swipe pager, most-used dock, and the calendar + Canvas agenda |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 
