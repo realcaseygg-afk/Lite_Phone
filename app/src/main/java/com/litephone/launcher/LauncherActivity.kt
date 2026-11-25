@@ -341,12 +341,14 @@ class LauncherActivity : Activity() {
             }
             return
         }
+        // Always refresh, and open a weather app too if there is one.
+        loadWeather(force = true)
         val app = Weather.WEATHER_APPS.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+            ?: Policy.allowedEntries(this).firstOrNull { it.label.contains("weather", ignoreCase = true) }?.intent
         if (app != null) {
             startActivity(app.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } else {
-            Toast.makeText(this, "Updating weather\u2026", Toast.LENGTH_SHORT).show()
-            loadWeather(force = true)
+            Toast.makeText(this, "Updating weather\u2026 (install Samsung Weather for the full forecast)", Toast.LENGTH_SHORT).show()
         }
     }
 
