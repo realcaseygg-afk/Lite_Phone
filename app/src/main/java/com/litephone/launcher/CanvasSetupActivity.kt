@@ -35,9 +35,11 @@ class CanvasSetupActivity : Activity() {
         c.addView(Ui.text(
             this,
             "Shows assignments due in the next 7 days that you haven't submitted yet.\n\n" +
-                "1. In the Canvas app or website, open Account → Settings.\n" +
-                "2. Under Approved integrations, tap \"+ New access token\". Name it Lite Phone and generate it.\n" +
-                "3. Copy the token and paste it below with your school's Canvas address.\n\n" +
+                "The token is made on the Canvas website, not in the app. Start a \uD83C\uDF10 Web pass (Settings) first.\n\n" +
+                "1. In the browser, go to your school's Canvas site and sign in.\n" +
+                "2. Open \u2630 \u2192 Account \u2192 Settings.\n" +
+                "3. Under Approved Integrations, tap \"+ New Access Token\". Name it Lite Phone and generate it.\n" +
+                "4. Copy the token (it's only shown once) and paste it below with the address from the browser bar.\n\n" +
                 "The token is kept on this phone and only sent to your school's Canvas.",
             15f, Ui.MUTED
         ), Ui.lp(this, 16))
