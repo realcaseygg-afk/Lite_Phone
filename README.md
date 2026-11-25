@@ -2,7 +2,7 @@
 
 A minimal home screen (launcher) for a Samsung Galaxy S25+ that only lets these apps open:
 
-**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · 毎日ノート (Japanese notebook) · Kindle**
+**Phone · Messages · Camera · Spotify · Audible · Claude · ChatGPT · Outlook · Gmail · Canvas · Duo Mobile · Kindle · My Apps: 毎日ノート (Japanese notebook) and The Scholar's Garden**
 
 These are allowed too:
 
@@ -23,7 +23,7 @@ Everything else gets closed straight away and you're sent back to the Lite Phone
 
 ## Home screen
 
-The home screen lists **categories**: Phone & Messages, School, Notes & Tasks, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
+The home screen lists **categories**: Phone & Messages, My Apps, School, Notes & Tasks, Sign-in & Security, AI, Music & Books, Camera & Photos, Banking & Money, Food, Shopping, Everyday and Other. Tap a category to see its apps. Only categories with apps in them are shown, and each one lists a few of its apps underneath.
 
 - **Weather by the clock:** the current temperature and conditions, today's high and low, and your town. Tap it once to allow approximate location. After that, tapping opens your weather app (Samsung Weather, The Weather Channel or AccuWeather, all allowed under Everyday), and long-pressing opens Customize. Data comes from [Open-Meteo](https://open-meteo.com), which is free and needs no account. Only a location rounded to about 1 km is sent. In **Customize** you can pick a city instead of using your location, choose °F or °C, or hide the weather.
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.

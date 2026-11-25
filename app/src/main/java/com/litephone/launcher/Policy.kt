@@ -33,6 +33,7 @@ object Policy {
         "com.duosecurity.duomobile",       // Duo Mobile
         "com.google.android.gm",           // Gmail
         "com.mainichinote.app",            // 毎日ノート (personal Japanese notebook)
+        "org.scholarsgarden.game",         // The Scholar's Garden (personal game)
         "com.amazon.kindle",               // Kindle
     )
 
@@ -185,7 +186,7 @@ object Policy {
 
     /** Default category order on the home screen. */
     val CATEGORY_NAMES = listOf(
-        "Phone & Messages", "School", "Notes & Tasks", "Sign-in & Security", "AI", "Music & Books", "Camera & Photos",
+        "Phone & Messages", "My Apps", "School", "Notes & Tasks", "Sign-in & Security", "AI", "Music & Books", "Camera & Photos",
         "Banking & Money", "Food", "Shopping", "Everyday", OTHER,
     )
 
@@ -200,6 +201,7 @@ object Policy {
         put("AI", listOf("com.anthropic.claude", "com.openai.chatgpt"))
         put("Music & Books", listOf("com.spotify.music", "com.audible.application", "com.amazon.kindle"))
         put("Camera & Photos", CAMERA + listOf("com.sec.android.gallery3d", "com.google.android.apps.photos"))
+        put("My Apps", MY_APPS)
         put("Sign-in & Security", AUTHENTICATOR_APPS + PASSWORD_MANAGERS)
         put("Notes & Tasks", NOTES_APPS)
         put("School", listOf(
@@ -298,6 +300,12 @@ object Policy {
         "com.kunzisoft.keepass.libre",
     )
 
+    /** Apps you made yourself. */
+    val MY_APPS = listOf(
+        "com.mainichinote.app",                         // 毎日ノート
+        "org.scholarsgarden.game",                      // The Scholar's Garden
+    )
+
     class DefaultsUpdate(
         val version: Int,
         val packages: List<String>,
@@ -306,7 +314,7 @@ object Policy {
     )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 13
+    const val DEFAULTS_VERSION = 14
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -322,6 +330,7 @@ object Policy {
             removed = listOf("com.samsung.android.spay")),
         DefaultsUpdate(12, listOf("com.amazon.kindle"), inMoreApps = false),
         DefaultsUpdate(13, Weather.WEATHER_APPS, inMoreApps = false),
+        DefaultsUpdate(14, MY_APPS, inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
