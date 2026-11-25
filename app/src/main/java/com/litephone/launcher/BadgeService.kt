@@ -18,6 +18,23 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
         var counts: Map<String, Int> = emptyMap()
             private set
 
+        /** One unread message, email or missed call, from its notification. Memory only. */
+        class InboxItem(
+            val pkg: String, val app: String, val title: String, val text: String,
+            val time: Long, val open: android.app.PendingIntent?,
+        )
+
+        /** Unread previews from messaging, email and phone apps, newest first. */
+        @Volatile
+        var inbox: List<InboxItem> = emptyList()
+            private set
+
+        // Email and chat apps whose previews go into the inbox (besides phone and texts).
+        val INBOX_EXTRA = setOf(
+            "com.microsoft.office.outlook", "com.google.android.gm", "com.microsoft.teams",
+            "com.samsung.android.email.provider",
+        )
+
         private val listeners = LinkedHashSet<() -> Unit>()
         private val main = Handler(Looper.getMainLooper())
 
@@ -73,6 +90,7 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
         val countable = (Policy.PHONE + Policy.MESSAGES + Policy.VOICEMAIL_APPS + listOfNotNull(dialer, sms)).toSet()
         val enforcing = Policy.isEnforcing(this)
         val map = HashMap<String, Int>()
+        val items = ArrayList<InboxItem>()
         for (sbn in active) {
             if (!sbn.isClearable) continue // ongoing calls, music players, downloads
             // Food apps: never any notifications. Blocked apps: none while locked.
@@ -88,10 +106,26 @@ class BadgeService : NotificationListenerService(), android.content.SharedPrefer
             if (n.extras?.containsKey(Notification.EXTRA_MEDIA_SESSION) == true) continue
             var pkg = sbn.packageName
             if (pkg in CALL_PACKAGES && dialer != null) pkg = dialer
+            if (pkg in countable || pkg in INBOX_EXTRA) inboxItem(pkg, n, sbn.postTime)?.let { items += it }
             if (pkg !in countable) continue
             map[pkg] = (map[pkg] ?: 0) + maxOf(1, n.number)
         }
+        inbox = items.sortedByDescending { it.time }
         publish(map)
+    }
+
+    private fun inboxItem(pkg: String, n: Notification, time: Long): InboxItem? {
+        val ex = n.extras ?: return null
+        val title = ex.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim().orEmpty()
+        val text = (ex.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: ex.getCharSequence(Notification.EXTRA_TEXT))
+            ?.toString()?.replace(Regex("\\s+"), " ")?.trim().orEmpty()
+        if (title.isEmpty() && text.isEmpty()) return null
+        val app = try {
+            packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+        } catch (e: Exception) {
+            pkg
+        }
+        return InboxItem(pkg, app, title, text, time, n.contentIntent)
     }
 
     /**
