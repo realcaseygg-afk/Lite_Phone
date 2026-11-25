@@ -1,6 +1,12 @@
 package com.litephone.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
+import android.os.Build
+import android.util.SizeF
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.ColorMatrix
@@ -47,6 +53,10 @@ class LauncherActivity : Activity() {
     private lateinit var scroll: ScrollView
     private lateinit var dock: LinearLayout
     private lateinit var agendaList: LinearLayout
+    private lateinit var widgetBox: LinearLayout
+    private lateinit var widgetHost: AppWidgetHost
+    private lateinit var widgetManager: AppWidgetManager
+    private var pendingWidgetId = -1
     private lateinit var dots: LinearLayout
     private lateinit var clock: TextClock
     private lateinit var date: TextClock
@@ -74,6 +84,8 @@ class LauncherActivity : Activity() {
     private companion object {
         const val REQ_LOCATION = 42
         const val REQ_CALENDAR = 43
+        const val REQ_BIND_WIDGET = 50
+        const val REQ_CONFIGURE_WIDGET = 51
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -166,11 +178,19 @@ class LauncherActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             addView(Ui.text(this@LauncherActivity, "Agenda", 34f, bold = true),
                 LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(Ui.smallButton(this@LauncherActivity, "↻ Refresh", Ui.MUTED) { loadAgenda(force = true) })
+            addView(Ui.smallButton(this@LauncherActivity, "+ Widgets", Ui.MUTED) { widgetMenu() })
+            addView(Ui.smallButton(this@LauncherActivity, "↻", Ui.MUTED) { loadAgenda(force = true) },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    leftMargin = Ui.dp(this@LauncherActivity, 6)
+                })
         }
+        widgetManager = AppWidgetManager.getInstance(this)
+        widgetHost = AppWidgetHost(applicationContext, AgendaWidgets.HOST_ID)
+        widgetBox = Ui.column(this)
         val agendaPage = Ui.column(this).apply {
             setPadding(pad, 0, pad, 0)
             addView(agendaTitle, Ui.lp(this@LauncherActivity, 24))
+            addView(widgetBox, Ui.lp(this@LauncherActivity, 6))
             addView(agendaScroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
                 topMargin = Ui.dp(this@LauncherActivity, 6)
             })
@@ -218,6 +238,18 @@ class LauncherActivity : Activity() {
         }
         setContentView(root)
         updateDots()
+        renderWidgets()
+    }
+
+    // Widgets only update while the host is listening.
+    override fun onStart() {
+        super.onStart()
+        try { widgetHost.startListening() } catch (e: Exception) { }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try { widgetHost.stopListening() } catch (e: Exception) { }
     }
 
     override fun onResume() {
@@ -499,7 +531,7 @@ class LauncherActivity : Activity() {
                 requestPermissions(arrayOf(android.Manifest.permission.READ_CALENDAR), REQ_CALENDAR)
             }, Ui.lp(this, 12))
         }
-        if (!Agenda.canvasConnected(this)) {
+        if (!Agenda.canvasConnected(this) && !AgendaWidgets.hasCanvasWidget(this)) {
             agendaList.addView(prompt("Connect Canvas", "Tap to show assignments that are due.") {
                 startActivity(Intent(this, CanvasSetupActivity::class.java))
             }, Ui.lp(this, 12))
@@ -575,6 +607,140 @@ class LauncherActivity : Activity() {
         })
         row.addView(texts, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         return row
+    }
+
+    // ---- Widgets on the Agenda page ----
+
+    private fun renderWidgets() {
+        widgetBox.removeAllViews()
+        val widthDp = (resources.displayMetrics.widthPixels / resources.displayMetrics.density).toInt() - 48
+        for (id in AgendaWidgets.ids(this)) {
+            val info = widgetManager.getAppWidgetInfo(id)
+            if (info == null) {
+                AgendaWidgets.remove(this, id)
+                continue
+            }
+            val hDp = AgendaWidgets.heightDp(this, id)
+            val view = try {
+                widgetHost.createView(applicationContext, id, info)
+            } catch (e: Exception) {
+                continue
+            }
+            try {
+                if (Build.VERSION.SDK_INT >= 31) {
+                    view.updateAppWidgetSize(Bundle(), listOf(SizeF(widthDp.toFloat(), hDp.toFloat())))
+                } else {
+                    @Suppress("DEPRECATION")
+                    view.updateAppWidgetSize(null, widthDp, hDp, widthDp, hDp)
+                }
+            } catch (e: Exception) { }
+            widgetBox.addView(view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, hDp)).apply {
+                bottomMargin = Ui.dp(this@LauncherActivity, 10)
+            })
+        }
+    }
+
+    /** Add a widget, or resize / remove one you already have. */
+    private fun widgetMenu() {
+        val ids = AgendaWidgets.ids(this)
+        val names = ids.map { id -> widgetManager.getAppWidgetInfo(id)?.let { AgendaWidgets.label(this, it) } ?: "Widget" }
+        val options = listOf("Add a widget…") + names.map { "Change: $it" }
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle("Agenda widgets")
+            .setItems(options.toTypedArray()) { _, which ->
+                if (which == 0) pickWidget() else editWidget(ids[which - 1], names[which - 1])
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun editWidget(id: Int, name: String) {
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle(name)
+            .setItems(arrayOf("Taller", "Shorter", "Remove")) { _, which ->
+                when (which) {
+                    0 -> AgendaWidgets.resize(this, id, bigger = true)
+                    1 -> AgendaWidgets.resize(this, id, bigger = false)
+                    2 -> {
+                        widgetHost.deleteAppWidgetId(id)
+                        AgendaWidgets.remove(this, id)
+                    }
+                }
+                renderWidgets()
+                loadAgenda()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun pickWidget() {
+        val choices = AgendaWidgets.available(this)
+        if (choices.isEmpty()) {
+            Toast.makeText(this, "None of your allowed apps have widgets.", Toast.LENGTH_LONG).show()
+            return
+        }
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle("Add a widget")
+            .setItems(choices.map { AgendaWidgets.label(this, it) }.toTypedArray()) { _, which -> addWidget(choices[which]) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun addWidget(info: AppWidgetProviderInfo) {
+        val id = widgetHost.allocateAppWidgetId()
+        if (widgetManager.bindAppWidgetIdIfAllowed(id, info.provider)) {
+            configureOrSave(id, info)
+        } else {
+            // Android asks once whether Lite Phone may show widgets. That screen mentions
+            // Lite Phone, so the Settings lock stands down for it.
+            pendingWidgetId = id
+            Policy.allowInstallerBriefly(this)
+            try {
+                startActivityForResult(
+                    Intent(AppWidgetManager.ACTION_APPWIDGET_BIND)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.provider),
+                    REQ_BIND_WIDGET
+                )
+            } catch (e: Exception) {
+                widgetHost.deleteAppWidgetId(id)
+                pendingWidgetId = -1
+                Toast.makeText(this, "Couldn't add that widget", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /** Some widgets have their own setup screen (pick a calendar, a course, etc.). */
+    private fun configureOrSave(id: Int, info: AppWidgetProviderInfo?) {
+        if (info?.configure != null) {
+            pendingWidgetId = id
+            try {
+                widgetHost.startAppWidgetConfigureActivityForResult(this, id, 0, REQ_CONFIGURE_WIDGET, null)
+                return
+            } catch (e: Exception) { }
+        }
+        pendingWidgetId = -1
+        saveWidget(id)
+    }
+
+    private fun saveWidget(id: Int) {
+        AgendaWidgets.add(this, id)
+        renderWidgets()
+        loadAgenda()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQ_BIND_WIDGET && requestCode != REQ_CONFIGURE_WIDGET) return
+        val id = pendingWidgetId
+        if (id == -1) return
+        pendingWidgetId = -1
+        if (resultCode != RESULT_OK) {
+            widgetHost.deleteAppWidgetId(id)
+            return
+        }
+        if (requestCode == REQ_BIND_WIDGET) configureOrSave(id, widgetManager.getAppWidgetInfo(id)) else saveWidget(id)
     }
 
     private fun tryStart(i: Intent): Boolean = try {
