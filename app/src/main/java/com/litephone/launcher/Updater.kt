@@ -191,7 +191,7 @@ object Updater {
      * GET with redirects followed by hand, so the token only ever goes to
      * api.github.com and never to the download servers it redirects to.
      */
-    private fun connect(url: String, accept: String?, token: String?): HttpURLConnection {
+    internal fun connect(url: String, accept: String?, token: String?): HttpURLConnection {
         var u = URL(url)
         repeat(6) {
             val c = u.openConnection() as HttpURLConnection

@@ -59,7 +59,13 @@ class LauncherActivity : Activity() {
     private var pendingWidgetId = -1
     private lateinit var dots: LinearLayout
     private lateinit var clock: TextClock
-    private lateinit var date: TextClock
+    private lateinit var date: TextView
+    private lateinit var wordView: TextView
+    private lateinit var gardenView: TextView
+    private lateinit var cardBox: LinearLayout
+    private lateinit var agendaTitleText: TextView
+    private var themeAtCreate = false
+    private var cardsAt = 0L
     private lateinit var wallpaper: ImageView
     private lateinit var dim: View
     private lateinit var bottomBar: LinearLayout
@@ -76,7 +82,10 @@ class LauncherActivity : Activity() {
     private val ticker = object : Runnable {
         override fun run() {
             updateBanner()
+            if (themeAtCreate != Theme.paper) { recreate(); return }
+            updateDate()
             if (Weather.enabled(this@LauncherActivity) && Weather.isStale(this@LauncherActivity)) loadWeather()
+            if (System.currentTimeMillis() - cardsAt > 10 * 60_000L) loadExtras()
             handler.postDelayed(this, 10_000)
         }
     }
@@ -84,6 +93,7 @@ class LauncherActivity : Activity() {
     private companion object {
         const val REQ_LOCATION = 42
         const val REQ_CALENDAR = 43
+        const val REQ_CONTACTS = 44
         const val REQ_BIND_WIDGET = 50
         const val REQ_CONFIGURE_WIDGET = 51
     }
@@ -100,15 +110,23 @@ class LauncherActivity : Activity() {
             setTextColor(Ui.FG)
             setOnLongClickListener { customize(); true }
         }
-        date = TextClock(this).apply {
-            format12Hour = "EEEE, MMMM d"
-            format24Hour = "EEEE, MMMM d"
-            textSize = 18f
-            setTextColor(0xFFD0D0D6.toInt())
+        themeAtCreate = Theme.paper
+        date = Ui.text(this, "", 18f, Ui.SUBTLE).apply {
             setOnLongClickListener { customize(); true }
         }
+        wordView = Ui.text(this, "", 14f, Ui.SUBTLE).apply {
+            visibility = View.GONE
+            setOnClickListener {
+                packageManager.getLaunchIntentForPackage(Vocab.NOTEBOOK_PKG)?.let { launch(it, "毎日ノート") }
+            }
+        }
+        gardenView = Ui.text(this, "", 15f, Ui.SUBTLE).apply {
+            visibility = View.GONE
+            isSingleLine = true
+        }
+        cardBox = Ui.column(this)
         wxMain = Ui.text(this, "", 30f).apply { isSingleLine = true }
-        wxDetail = Ui.text(this, "", 13f, 0xFFD0D0D6.toInt())
+        wxDetail = Ui.text(this, "", 13f, Ui.SUBTLE)
         wxBox = Ui.column(this).apply {
             addView(wxMain)
             addView(wxDetail)
@@ -123,8 +141,8 @@ class LauncherActivity : Activity() {
         }
         search = Ui.input(this, "Search apps", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_FILTER).apply {
             textSize = 17f
-            background = Ui.rounded(0x33FFFFFF, Ui.dp(this@LauncherActivity, 14).toFloat())
-            setHintTextColor(0xFFB0B0B8.toInt())
+            background = Ui.rounded(Ui.FIELD, Ui.dp(this@LauncherActivity, 14).toFloat())
+            setHintTextColor(Ui.DIM)
             imeOptions = EditorInfo.IME_ACTION_GO
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -134,7 +152,9 @@ class LauncherActivity : Activity() {
             // "Go" on the keyboard opens the top result.
             setOnEditorActionListener { _, action, _ ->
                 if (action == EditorInfo.IME_ACTION_GO) {
-                    searchResults().firstOrNull()?.let { app -> launch(app.intent, app.label) }
+                    val cmd = Commands.suggestions(this@LauncherActivity, text.toString(), commandHooks).firstOrNull()
+                    if (cmd != null) runCommand(cmd)
+                    else searchResults().firstOrNull()?.let { app -> launch(app.intent, app.label) }
                     true
                 } else false
             }
@@ -148,7 +168,10 @@ class LauncherActivity : Activity() {
         scroll = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
-            addView(appList)
+            addView(Ui.column(this@LauncherActivity).apply {
+                addView(cardBox, Ui.lp(this@LauncherActivity))
+                addView(appList, Ui.lp(this@LauncherActivity))
+            })
         }
         dock = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -159,6 +182,8 @@ class LauncherActivity : Activity() {
             setPadding(pad, 0, pad, 0)
             addView(header, Ui.lp(this@LauncherActivity, 20))
             addView(date, Ui.lp(this@LauncherActivity))
+            addView(wordView, Ui.lp(this@LauncherActivity, 4))
+            addView(gardenView, Ui.lp(this@LauncherActivity, 4))
             addView(search, Ui.lp(this@LauncherActivity, 14))
             addView(banner, Ui.lp(this@LauncherActivity, 10))
             addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
@@ -176,8 +201,8 @@ class LauncherActivity : Activity() {
         }
         val agendaTitle = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(Ui.text(this@LauncherActivity, "Agenda", 34f, bold = true),
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            agendaTitleText = Ui.text(this@LauncherActivity, "Agenda", 34f, bold = true)
+            addView(agendaTitleText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             addView(Ui.smallButton(this@LauncherActivity, "+ Widgets", Ui.MUTED) { widgetMenu() })
             addView(Ui.smallButton(this@LauncherActivity, "↻", Ui.MUTED) { loadAgenda(force = true) },
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
@@ -254,6 +279,11 @@ class LauncherActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Day/night theme changed while away: rebuild everything in the new colours.
+        if (themeAtCreate != Theme.paper) {
+            recreate()
+            return
+        }
         AdminSession.end() // back on the home screen = passcode-holder visit is over
         if (!Prefs.isArmed(this)) {
             startActivity(Intent(this, SetupActivity::class.java))
@@ -268,6 +298,7 @@ class LauncherActivity : Activity() {
         }.start()
         if (pager.page == 1) loadAgenda()
         if (Weather.enabled(this) && Weather.isStale(this)) loadWeather()
+        loadExtras()
         BadgeService.addListener(badgesChanged)
         handler.removeCallbacks(ticker)
         handler.post(ticker)
@@ -308,19 +339,20 @@ class LauncherActivity : Activity() {
     private fun applyLook() {
         val bg = Look.background(this)
         val photo = if (bg == Look.BG_PHOTO) Look.wallpaperBitmap(this) else null
+        Ui.styleSystemBars(this)
         if (bg == Look.BG_PHONE) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
-            window.setBackgroundDrawable(ColorDrawable(Color.BLACK))
+            window.setBackgroundDrawable(ColorDrawable(Ui.BG))
         }
         wallpaper.setImageBitmap(photo)
         wallpaper.visibility = if (photo != null) View.VISIBLE else View.GONE
         dim.setBackgroundColor(if (bg == Look.BG_BLACK) Color.TRANSPARENT else Look.dimColor(this))
 
         val centered = Look.centered(this)
-        val shadow = bg != Look.BG_BLACK
+        val shadow = bg != Look.BG_BLACK && !Theme.paper
         fun shade(t: TextView) {
             if (shadow) t.setShadowLayer(10f, 0f, 1f, 0xCC000000.toInt()) else t.setShadowLayer(0f, 0f, 0f, 0)
         }
@@ -346,21 +378,30 @@ class LauncherActivity : Activity() {
         clock.textSize = if (Look.clock(this) == "small") 48f else 72f
         date.visibility = if (Look.showDate(this)) View.VISIBLE else View.GONE
         date.typeface = Look.typeface(this)
+        updateDate()
+        for (t in listOf(wordView, gardenView)) {
+            t.gravity = if (centered) Gravity.CENTER_HORIZONTAL else Gravity.START
+            t.typeface = Look.typeface(this)
+            shade(t)
+        }
+        search.hint = Look.t(this, "Search apps, or try: call, text, timer, ?", "アプリを検索・コマンド")
+        agendaTitleText.text = Look.t(this, "Agenda", "予定")
+        (bottomBar.getChildAt(0) as? TextView)?.text = Look.t(this, "\u2699 Settings", "\u2699 設定")
         (bottomBar.getChildAt(0) as? TextView)?.let {
-            it.setTextColor(if (shadow) 0xFFD0D0D6.toInt() else Ui.MUTED)
+            it.setTextColor(if (shadow) Ui.SUBTLE else Ui.MUTED)
             shade(it)
         }
     }
 
     /** Tiles sit on a slightly see-through card so wallpapers show through. */
-    private fun cardColor() = if (Look.background(this) == Look.BG_BLACK) Ui.SURFACE else 0xCC1C1C1E.toInt()
+    private fun cardColor() = if (Look.background(this) == Look.BG_BLACK) Ui.SURFACE else (Ui.SURFACE and 0x00FFFFFF) or 0xCC000000.toInt()
 
     private fun updateDots() {
         dots.removeAllViews()
         val size = Ui.dp(this, 7)
         for (i in 0 until pager.pageCount.coerceAtLeast(2)) {
             dots.addView(View(this).apply {
-                background = Ui.rounded(if (i == pager.page) Ui.FG else 0xFF555555.toInt(), size / 2f)
+                background = Ui.rounded(if (i == pager.page) Ui.FG else Ui.DOT_OFF, size / 2f)
                 setOnClickListener { pager.goTo(i) }
             }, LinearLayout.LayoutParams(size, size).apply {
                 leftMargin = size / 2; rightMargin = size / 2
@@ -389,9 +430,11 @@ class LauncherActivity : Activity() {
         appList.removeAllViews()
         val arrange = { ArrangeActivity.openCategories(this) }
         if (search.text.isNotBlank()) {
+            val commands = Commands.suggestions(this, search.text.toString(), commandHooks)
+            for (cmd in commands) appList.addView(commandRow(cmd))
             val results = searchResults()
-            if (results.isEmpty()) {
-                appList.addView(Ui.text(this, "No allowed app matches that.", 17f, 0xFFB0B0B8.toInt()))
+            if (results.isEmpty() && commands.isEmpty()) {
+                appList.addView(Ui.text(this, "No allowed app matches that.", 17f, Ui.DIM))
             }
             for (app in results) appList.addView(AppRow.build(this, app, compact = true, onLongClick = arrange))
             return
@@ -419,7 +462,7 @@ class LauncherActivity : Activity() {
     private fun tile(cat: Policy.Category, onLongClick: () -> Unit): View {
         val p = Ui.dp(this, 13)
         val inner = Ui.column(this).apply { setPadding(p, p - 2, p, p - 2) }
-        inner.addView(Ui.text(this, cat.name, 15.5f, bold = true).apply {
+        inner.addView(Ui.text(this, Look.categoryLabel(this, cat.name), 15.5f, bold = true).apply {
             typeface = Typeface.create(Look.typeface(this@LauncherActivity), Typeface.BOLD)
             maxLines = 2
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
@@ -428,7 +471,7 @@ class LauncherActivity : Activity() {
         val shown = if (cat.apps.size > 4) cat.apps.take(3) else cat.apps.take(4)
         val iconSize = Ui.dp(this, 24)
         if (style == "none") {
-            icons.addView(Ui.text(this, "${cat.apps.size} ${if (cat.apps.size == 1) "app" else "apps"}", 13f, 0xFFB0B0B8.toInt()))
+            icons.addView(Ui.text(this, "${cat.apps.size} ${if (cat.apps.size == 1) "app" else "apps"}", 13f, Ui.DIM))
         } else {
             for (app in shown) {
                 icons.addView(ImageView(this).apply {
@@ -437,9 +480,9 @@ class LauncherActivity : Activity() {
                 }, LinearLayout.LayoutParams(iconSize, iconSize).apply { rightMargin = Ui.dp(this@LauncherActivity, 6) })
             }
             if (cat.apps.size > 4) {
-                icons.addView(Ui.text(this, "+${cat.apps.size - 3}", 11f, 0xFFDDDDDD.toInt(), bold = true).apply {
+                icons.addView(Ui.text(this, "+${cat.apps.size - 3}", 11f, Ui.SUBTLE, bold = true).apply {
                     gravity = Gravity.CENTER
-                    background = Ui.rounded(0xFF3A3A3E.toInt(), iconSize / 2f)
+                    background = Ui.rounded(Ui.CHIP, iconSize / 2f)
                 }, LinearLayout.LayoutParams(iconSize, iconSize))
             }
         }
@@ -483,10 +526,10 @@ class LauncherActivity : Activity() {
             val col = Ui.column(this).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
                 addView(bubble, LinearLayout.LayoutParams(circle, circle))
-                addView(Ui.text(this@LauncherActivity, app.label, 11.5f, 0xFFD0D0D6.toInt()).apply {
+                addView(Ui.text(this@LauncherActivity, app.label, 11.5f, Ui.SUBTLE).apply {
                     isSingleLine = true
                     gravity = Gravity.CENTER
-                    if (Look.background(this@LauncherActivity) != Look.BG_BLACK) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
+                    if (Look.background(this@LauncherActivity) != Look.BG_BLACK && !Theme.paper) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
                 }, Ui.lp(this@LauncherActivity, 5))
                 isClickable = true
                 setOnClickListener { launch(app.intent, app.label) }
@@ -508,6 +551,110 @@ class LauncherActivity : Activity() {
 
     // ---- Page 2: agenda ----
 
+    // ---- Command bar ----
+
+    private val commandHooks by lazy {
+        Commands.Hooks(
+            openAgenda = { clearSearch(); pager.goTo(1) },
+            weather = { onWeatherTap() },
+        )
+    }
+
+    private fun runCommand(cmd: Commands.Suggestion) {
+        if (cmd.needsContacts) {
+            requestPermissions(arrayOf(android.Manifest.permission.READ_CONTACTS, android.Manifest.permission.CALL_PHONE), REQ_CONTACTS)
+            return
+        }
+        cmd.run(this)
+        clearSearch()
+    }
+
+    private fun commandRow(cmd: Commands.Suggestion): View = LinearLayout(this).apply {
+        gravity = Gravity.CENTER_VERTICAL
+        val p = Ui.dp(this@LauncherActivity, 12)
+        setPadding(p, p, p, p)
+        background = Ui.rounded(cardColor(), Ui.dp(this@LauncherActivity, 14).toFloat())
+        isClickable = true
+        setOnClickListener { runCommand(cmd) }
+        addView(Ui.text(this@LauncherActivity, cmd.icon, 20f), LinearLayout.LayoutParams(Ui.dp(this@LauncherActivity, 36), ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(Ui.text(this@LauncherActivity, cmd.label, 17f).apply { typeface = Look.typeface(this@LauncherActivity) },
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+    }.also { it.layoutParams = Ui.lp(this).apply { bottomMargin = Ui.dp(this@LauncherActivity, 8) } }
+
+    // ---- Date, word of the day, garden, morning/evening card ----
+
+    private fun updateDate() {
+        val now = java.time.LocalDate.now()
+        date.text = if (Look.japanese(this)) {
+            now.format(java.time.format.DateTimeFormatter.ofPattern("M月d日（E）", Locale.JAPANESE))
+        } else {
+            now.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault()))
+        }
+        val word = if (Look.wordOfDay(this)) Vocab.today(this) else null
+        wordView.visibility = if (word != null) View.VISIBLE else View.GONE
+        if (word != null) wordView.text = "${word.word}（${word.reading}）· ${word.meaning}"
+    }
+
+    /** Garden, card and word list load off the main thread; at most every 10 minutes. */
+    private fun loadExtras() {
+        cardsAt = System.currentTimeMillis()
+        Thread {
+            if (Vocab.needsRefresh(this)) Vocab.refresh(this)
+            val garden = if (Look.garden(this)) try { Garden.compute(this) } catch (e: Exception) { null } else null
+            val card = try { DayCard.build(this) } catch (e: Exception) { null }
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                updateDate()
+                showGarden(garden)
+                showCard(card)
+            }
+        }.start()
+    }
+
+    private fun showGarden(g: Garden.State?) {
+        if (g == null) {
+            gardenView.visibility = View.GONE
+            return
+        }
+        val streak = if (g.streak > 0) "  " + Look.t(this, "${g.streak}-day streak", "${g.streak}日連続") else ""
+        gardenView.text = g.plants + streak
+        gardenView.visibility = View.VISIBLE
+        gardenView.setOnClickListener {
+            val msg = Look.t(this,
+                "Today: ${Ui.formatDuration(g.todayMinutes * 60_000)} of your ${Ui.formatDuration(g.goal * 60_000L)} goal",
+                "今日: ${Ui.formatDuration(g.todayMinutes * 60_000)}（目標 ${Ui.formatDuration(g.goal * 60_000L)}）")
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showCard(card: DayCard.Card?) {
+        cardBox.removeAllViews()
+        if (card == null) return
+        val p = Ui.dp(this, 14)
+        val box = LinearLayout(this).apply {
+            setPadding(p, p - 2, Ui.dp(this@LauncherActivity, 4), p)
+            background = Ui.rounded(cardColor(), Ui.dp(this@LauncherActivity, 18).toFloat())
+            isClickable = true
+            setOnClickListener { pager.goTo(1) }
+        }
+        val texts = Ui.column(this)
+        texts.addView(Ui.text(this, card.title, 17f, bold = true).apply {
+            typeface = android.graphics.Typeface.create(Look.typeface(this@LauncherActivity), android.graphics.Typeface.BOLD)
+        })
+        for (line in card.lines) texts.addView(Ui.text(this, line, 14f, Ui.SUBTLE).apply {
+            typeface = Look.typeface(this@LauncherActivity)
+        }, Ui.lp(this, 3))
+        box.addView(texts, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        box.addView(Ui.text(this, "✕", 16f, Ui.MUTED).apply {
+            setPadding(Ui.dp(this@LauncherActivity, 10), 0, Ui.dp(this@LauncherActivity, 10), Ui.dp(this@LauncherActivity, 10))
+            setOnClickListener {
+                DayCard.dismiss(this@LauncherActivity, card.key)
+                cardBox.removeAllViews()
+            }
+        })
+        cardBox.addView(box, Ui.lp(this).apply { bottomMargin = Ui.dp(this@LauncherActivity, 12) })
+    }
+
     private fun loadAgenda(force: Boolean = false) {
         if (agendaLoading) return
         agendaLoading = true
@@ -523,7 +670,7 @@ class LauncherActivity : Activity() {
 
     private fun showAgenda(r: Agenda.Result) {
         agendaList.removeAllViews()
-        val shadow = Look.background(this) != Look.BG_BLACK
+        val shadow = Look.background(this) != Look.BG_BLACK && !Theme.paper
 
         // Setup prompts first, so it's obvious how to fill this page.
         if (!Agenda.hasCalendarPermission(this)) {
@@ -542,7 +689,7 @@ class LauncherActivity : Activity() {
 
         if (r.items.isEmpty()) {
             if (Agenda.hasCalendarPermission(this) || Agenda.canvasConnected(this)) {
-                agendaList.addView(Ui.text(this, "Nothing in the next 7 days.", 16f, 0xFFB0B0B8.toInt()), Ui.lp(this, 16))
+                agendaList.addView(Ui.text(this, "Nothing in the next 7 days.", 16f, Ui.DIM), Ui.lp(this, 16))
             }
             return
         }
@@ -555,11 +702,11 @@ class LauncherActivity : Activity() {
             if (item.day != lastDay) {
                 lastDay = item.day
                 val label = when (item.day) {
-                    today -> "TODAY · ${item.day.format(dayFmt).uppercase()}"
-                    today.plusDays(1) -> "TOMORROW · ${item.day.format(dayFmt).uppercase()}"
+                    today -> "${Look.t(this, "TODAY", "今日")} · ${item.day.format(dayFmt).uppercase()}"
+                    today.plusDays(1) -> "${Look.t(this, "TOMORROW", "明日")} · ${item.day.format(dayFmt).uppercase()}"
                     else -> item.day.format(DateTimeFormatter.ofPattern("EEEE · MMM d", Locale.getDefault())).uppercase()
                 }
-                agendaList.addView(Ui.text(this, label, 13f, 0xFFB0B0B8.toInt(), bold = true).apply {
+                agendaList.addView(Ui.text(this, label, 13f, Ui.DIM, bold = true).apply {
                     letterSpacing = 0.06f
                     if (shadow) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
                 }, Ui.lp(this, 18))
@@ -583,7 +730,7 @@ class LauncherActivity : Activity() {
                 }
             }
         }
-        row.addView(Ui.text(this, time, 13f, 0xFFB0B0B8.toInt()).apply {
+        row.addView(Ui.text(this, time, 13f, Ui.DIM).apply {
             if (shadow) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
         }, LinearLayout.LayoutParams(Ui.dp(this, 70), ViewGroup.LayoutParams.WRAP_CONTENT))
         row.addView(View(this).apply { background = Ui.rounded(item.color, Ui.dp(this@LauncherActivity, 2).toFloat()) },
@@ -601,7 +748,7 @@ class LauncherActivity : Activity() {
             leftMargin = Ui.dp(this@LauncherActivity, 8)
         })
         texts.addView(titleLine)
-        if (item.subtitle.isNotBlank()) texts.addView(Ui.text(this, item.subtitle, 12.5f, 0xFFB0B0B8.toInt()).apply {
+        if (item.subtitle.isNotBlank()) texts.addView(Ui.text(this, item.subtitle, 12.5f, Ui.DIM).apply {
             maxLines = 1
             if (shadow) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
         })
@@ -754,7 +901,7 @@ class LauncherActivity : Activity() {
         setPadding(p, p, p, p)
         background = Ui.rounded(cardColor(), Ui.dp(this@LauncherActivity, 16).toFloat())
         addView(Ui.text(this@LauncherActivity, title, 16f, Ui.ACCENT, bold = true))
-        addView(Ui.text(this@LauncherActivity, body, 13.5f, 0xFFB0B0B8.toInt()), Ui.lp(this@LauncherActivity, 2))
+        addView(Ui.text(this@LauncherActivity, body, 13.5f, Ui.DIM), Ui.lp(this@LauncherActivity, 2))
         isClickable = true
         setOnClickListener { onClick() }
     }
@@ -816,6 +963,7 @@ class LauncherActivity : Activity() {
                 Toast.makeText(this, "No location, so no weather. You can pick a city in Customize.", Toast.LENGTH_LONG).show()
             }
             REQ_CALENDAR -> loadAgenda()
+            REQ_CONTACTS -> refreshApps()
         }
     }
 

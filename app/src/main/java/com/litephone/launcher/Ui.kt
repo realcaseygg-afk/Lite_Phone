@@ -18,15 +18,31 @@ import android.widget.TextView
 
 /** Small helpers so every screen is built the same simple way, in code. */
 object Ui {
-    const val BG = 0xFF000000.toInt()
-    const val SURFACE = 0xFF1C1C1E.toInt()
-    const val FG = 0xFFFFFFFF.toInt()
-    const val MUTED = 0xFF9A9AA0.toInt()
-    /** Changes with the accent colour chosen in Customize. */
-    var ACCENT = 0xFF7FB2FF.toInt()
-    const val WARN = 0xFFFFB74D.toInt()
-    const val DANGER = 0xFFFF6B6B.toInt()
-    const val GOOD = 0xFF66D19E.toInt()
+    // Colours follow the theme: dark, or warm "paper" by day (see Theme).
+    private fun pick(dark: Long, paper: Long): Int = (if (Theme.paper) paper else dark).toInt()
+
+    val BG: Int get() = pick(0xFF000000, 0xFFF3EEE4)
+    val SURFACE: Int get() = pick(0xFF1C1C1E, 0xFFE6DDCE)
+    val FG: Int get() = pick(0xFFFFFFFF, 0xFF26241F)
+    val MUTED: Int get() = pick(0xFF9A9AA0, 0xFF6E685E)
+    /** Secondary text that should still be easy to read (dates, labels). */
+    val SUBTLE: Int get() = pick(0xFFD0D0D6, 0xFF3F3B35)
+    /** Quieter secondary text (app names under tiles, agenda details). */
+    val DIM: Int get() = pick(0xFFB0B0B8, 0xFF6E685E)
+    /** The search field and other soft fills. */
+    val FIELD: Int get() = pick(0x33FFFFFF, 0x16000000)
+    /** Small chips like "+4" on tiles. */
+    val CHIP: Int get() = pick(0xFF3A3A3E, 0xFFD6CCBA)
+    val DOT_OFF: Int get() = pick(0xFF555555, 0xFFC7BDAB)
+    val WARN: Int get() = pick(0xFFFFB74D, 0xFFA65F00)
+    val DANGER: Int get() = pick(0xFFFF6B6B, 0xFFB3261E)
+    val GOOD: Int get() = pick(0xFF66D19E, 0xFF2E7D4F)
+
+    private var accentBase = 0xFF7FB2FF.toInt()
+    /** The accent colour chosen in Customize (darkened on paper so it stays readable). */
+    var ACCENT: Int
+        get() = if (Theme.paper) Theme.darken(accentBase) else accentBase
+        set(v) { accentBase = v }
 
     fun dp(ctx: Context, v: Int): Int = (v * ctx.resources.displayMetrics.density + 0.5f).toInt()
 
@@ -121,6 +137,7 @@ object Ui {
 
     /** Shows [content] full screen, scrollable, padded clear of the status/nav bars. */
     fun showScrolling(activity: Activity, content: View) {
+        styleSystemBars(activity)
         val scroll = ScrollView(activity).apply {
             setBackgroundColor(BG)
             isFillViewport = true
@@ -129,6 +146,22 @@ object Ui {
         }
         padForSystemBars(scroll)
         activity.setContentView(scroll)
+    }
+
+    /** Dark status-bar icons on the paper look, light ones on dark. */
+    @Suppress("DEPRECATION")
+    fun styleSystemBars(activity: Activity) {
+        val light = Theme.paper
+        activity.window.decorView.setBackgroundColor(BG)
+        if (Build.VERSION.SDK_INT >= 30) {
+            val mask = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            activity.window.insetsController?.setSystemBarsAppearance(if (light) mask else 0, mask)
+        } else {
+            val flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            val v = activity.window.decorView
+            v.systemUiVisibility = if (light) v.systemUiVisibility or flags else v.systemUiVisibility and flags.inv()
+        }
     }
 
     fun padForSystemBars(v: View) {

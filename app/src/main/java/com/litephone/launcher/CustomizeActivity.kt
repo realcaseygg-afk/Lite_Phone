@@ -27,6 +27,46 @@ class CustomizeActivity : Activity() {
         c.addView(Ui.text(this, "Customize", 28f, bold = true))
         c.addView(Ui.text(this, "Changes show on the home screen right away.", 15f, Ui.MUTED), Ui.lp(this, 8))
 
+        // Theme
+        choice(c, "Theme", listOf("dark" to "Dark", "paper" to "Paper", "auto" to "Auto"), Look.theme(this)) {
+            Look.setTheme(this, it)
+            recreate()
+        }
+        c.addView(Ui.text(
+            this,
+            "Paper is a warm cream look with a serif font. Auto uses Paper from sunrise to sunset where you are, and Dark at night.",
+            13f, Ui.MUTED
+        ), Ui.lp(this, 6))
+
+        // Japanese
+        choice(c, "Home screen language", listOf("en" to "English", "jp" to "日本語"),
+            if (Look.japanese(this)) "jp" else "en") { Look.setJapanese(this, it == "jp") }
+        choice(c, "Word of the day", listOf("on" to "Show", "off" to "Hide"),
+            if (Look.wordOfDay(this)) "on" else "off") { Look.setWordOfDay(this, it == "on") }
+        c.addView(Ui.text(
+            this,
+            "A word under the date from your 毎日ノート vocabulary, a new one each day (needs the GitHub token in Updates; " +
+                "until then it uses a small built-in list). Tap it to open 毎日ノート.",
+            13f, Ui.MUTED
+        ), Ui.lp(this, 6))
+
+        // Garden
+        choice(c, "Garden", listOf("on" to "Show", "off" to "Hide"),
+            if (Look.garden(this)) "on" else "off") { Look.setGarden(this, it == "on") }
+        if (Look.garden(this)) {
+            choice(c, "Daily screen-time goal", listOf("120" to "2 h", "180" to "3 h", "240" to "4 h", "300" to "5 h"),
+                Look.gardenGoal(this).toString()) { Look.setGardenGoal(this, it.toInt()) }
+            c.addView(Ui.text(
+                this,
+                "Each day under your goal grows a flower; a day over it wilts. Needs usage tracking.",
+                13f, Ui.MUTED
+            ), Ui.lp(this, 6))
+        }
+
+        // Morning / evening card
+        choice(c, "Morning and evening card", listOf("on" to "Show", "off" to "Hide"),
+            if (Look.dayCards(this)) "on" else "off") { Look.setDayCards(this, it == "on") }
+
         // Background
         val bg = Look.background(this)
         choice(c, "Background", listOf(Look.BG_BLACK to "Black", Look.BG_PHONE to "Phone wallpaper", Look.BG_PHOTO to "Photo"), bg) {

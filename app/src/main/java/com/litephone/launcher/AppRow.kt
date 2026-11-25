@@ -65,6 +65,6 @@ object AppRow {
         Ui.text(activity, text, sp, color).apply {
             typeface = Look.typeface(activity)
             isSingleLine = true
-            if (Look.background(activity) != Look.BG_BLACK) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
+            if (Look.background(activity) != Look.BG_BLACK && !Theme.paper) setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt())
         }
 }

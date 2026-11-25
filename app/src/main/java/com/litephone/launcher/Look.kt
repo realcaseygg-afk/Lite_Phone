@@ -20,6 +20,12 @@ object Look {
     private const val K_FONT = "look_font"
     private const val K_CLOCK = "look_clock"
     private const val K_DATE = "look_date"
+    private const val K_THEME = "look_theme"
+    private const val K_JAPANESE = "look_japanese"
+    private const val K_WORD = "look_word"
+    private const val K_GARDEN = "look_garden"
+    private const val K_GOAL = "look_garden_goal"
+    private const val K_CARDS = "look_cards"
 
     const val BG_BLACK = "black"
     const val BG_PHONE = "phone"   // the phone's own wallpaper shows through
@@ -45,8 +51,45 @@ object Look {
     fun setDim(ctx: Context, v: Int) = Prefs.get(ctx).edit().putInt(K_DIM, v).apply()
     fun dimColor(ctx: Context): Int {
         val alpha = intArrayOf(0, 0x4D, 0x80, 0xB3)[dim(ctx).coerceIn(0, 3)]
-        return alpha shl 24
+        // On the paper look the wallpaper is washed out with cream instead of darkened.
+        return (alpha shl 24) or (if (Theme.paper) 0xF3EEE4 else 0)
     }
+
+    // ---- Theme, language and home extras ----
+
+    fun theme(ctx: Context) = str(ctx, K_THEME, "dark")       // dark | paper | auto
+    fun setTheme(ctx: Context, v: String) {
+        put(ctx, K_THEME, v)
+        Theme.invalidate()
+    }
+
+    fun japanese(ctx: Context) = Prefs.get(ctx).getBoolean(K_JAPANESE, false)
+    fun setJapanese(ctx: Context, v: Boolean) = Prefs.get(ctx).edit().putBoolean(K_JAPANESE, v).apply()
+
+    /** English or Japanese text for the home screen, depending on Japanese mode. */
+    fun t(ctx: Context, en: String, jp: String) = if (japanese(ctx)) jp else en
+
+    private val CATEGORY_JP = mapOf(
+        "Phone & Messages" to "電話・メッセージ", "My Apps" to "マイアプリ", "School" to "学校",
+        "Notes & Tasks" to "ノート・タスク", "Sign-in & Security" to "ログイン・セキュリティ", "AI" to "AI",
+        "Music & Books" to "音楽・本", "Camera & Photos" to "カメラ・写真", "Banking & Money" to "お金",
+        "Food" to "食べ物", "Shopping" to "買い物", "Everyday" to "毎日", "Other" to "その他",
+    )
+
+    fun categoryLabel(ctx: Context, name: String) = if (japanese(ctx)) CATEGORY_JP[name] ?: name else name
+
+    fun wordOfDay(ctx: Context) = Prefs.get(ctx).getBoolean(K_WORD, true)
+    fun setWordOfDay(ctx: Context, v: Boolean) = Prefs.get(ctx).edit().putBoolean(K_WORD, v).apply()
+
+    fun garden(ctx: Context) = Prefs.get(ctx).getBoolean(K_GARDEN, true)
+    fun setGarden(ctx: Context, v: Boolean) = Prefs.get(ctx).edit().putBoolean(K_GARDEN, v).apply()
+
+    /** Daily screen-time goal for the garden, in minutes. */
+    fun gardenGoal(ctx: Context) = Prefs.get(ctx).getInt(K_GOAL, 180)
+    fun setGardenGoal(ctx: Context, minutes: Int) = Prefs.get(ctx).edit().putInt(K_GOAL, minutes).apply()
+
+    fun dayCards(ctx: Context) = Prefs.get(ctx).getBoolean(K_CARDS, true)
+    fun setDayCards(ctx: Context, v: Boolean) = Prefs.get(ctx).edit().putBoolean(K_CARDS, v).apply()
 
     fun accent(ctx: Context): Int = Prefs.get(ctx).getInt(K_ACCENT, ACCENTS[0])
     fun setAccent(ctx: Context, color: Int) {
@@ -70,14 +113,18 @@ object Look {
     fun font(ctx: Context) = str(ctx, K_FONT, "default")      // default | light | serif | mono | condensed
     fun setFont(ctx: Context, v: String) = put(ctx, K_FONT, v)
     fun typeface(ctx: Context): Typeface = when (font(ctx)) {
+        "default" -> if (Theme.paper) Typeface.SERIF else Typeface.DEFAULT
         "light" -> Typeface.create("sans-serif-light", Typeface.NORMAL)
         "serif" -> Typeface.SERIF
         "mono" -> Typeface.MONOSPACE
         "condensed" -> Typeface.create("sans-serif-condensed", Typeface.NORMAL)
         else -> Typeface.DEFAULT
     }
-    fun clockTypeface(ctx: Context): Typeface =
-        if (font(ctx) == "default") Typeface.create("sans-serif-light", Typeface.NORMAL) else typeface(ctx)
+    fun clockTypeface(ctx: Context): Typeface = when {
+        font(ctx) != "default" -> typeface(ctx)
+        Theme.paper -> Typeface.create("serif", Typeface.NORMAL)
+        else -> Typeface.create("sans-serif-light", Typeface.NORMAL)
+    }
 
     fun clock(ctx: Context) = str(ctx, K_CLOCK, "large")      // large | small | hidden
     fun setClock(ctx: Context, v: String) = put(ctx, K_CLOCK, v)
@@ -87,9 +134,10 @@ object Look {
 
     fun reset(ctx: Context) {
         Prefs.get(ctx).edit().apply {
-            listOf(K_BG, K_DIM, K_ACCENT, K_ICONS, K_SIZE, K_ALIGN, K_FONT, K_CLOCK, K_DATE).forEach { remove(it) }
+            listOf(K_BG, K_DIM, K_ACCENT, K_ICONS, K_SIZE, K_ALIGN, K_FONT, K_CLOCK, K_DATE, K_THEME).forEach { remove(it) }
         }.apply()
         Ui.ACCENT = ACCENTS[0]
+        Theme.invalidate()
         wallpaperFile(ctx).delete()
     }
 

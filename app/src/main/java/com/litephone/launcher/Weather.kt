@@ -29,6 +29,15 @@ object Weather {
     private const val K_CITY_LON = "wx_city_lon"
     private const val K_CACHE = "wx_cache"          // temp|code|isDay|hi|lo|place|unit|time
     private const val STALE_MS = 30 * 60 * 1000L
+    private const val K_RISE = "wx_sunrise"
+    private const val K_SET = "wx_sunset"
+
+    /** Sunrise and sunset as minutes after midnight, once the weather has loaded. */
+    fun sunTimes(ctx: Context): Pair<Int, Int>? {
+        val sp = Prefs.get(ctx)
+        if (!sp.contains(K_RISE) || !sp.contains(K_SET)) return null
+        return sp.getInt(K_RISE, 420) to sp.getInt(K_SET, 1140)
+    }
 
     val WEATHER_APPS = listOf(
         "com.sec.android.daemonapp",        // Samsung Weather
@@ -134,7 +143,7 @@ object Weather {
             val url = "https://api.open-meteo.com/v1/forecast" +
                 "?latitude=${round2(lat)}&longitude=${round2(lon)}" +
                 "&current=temperature_2m,weather_code,is_day" +
-                "&daily=temperature_2m_max,temperature_2m_min" +
+                "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset" +
                 "&timezone=auto&forecast_days=1" +
                 if (f) "&temperature_unit=fahrenheit" else ""
             val json = JSONObject(get(url))
@@ -151,6 +160,17 @@ object Weather {
                 at = System.currentTimeMillis(),
             )
             save(ctx, n)
+            // Sunrise/sunset (local "2026-11-25T06:58") for the Auto day/night theme.
+            fun minutes(key: String) = daily.optJSONArray(key)?.optString(0)?.substringAfter('T')
+                ?.split(':')?.let { it[0].toInt() * 60 + it[1].toInt() }
+            try {
+                val rise = minutes("sunrise")
+                val set = minutes("sunset")
+                if (rise != null && set != null) {
+                    Prefs.get(ctx).edit().putInt(K_RISE, rise).putInt(K_SET, set).apply()
+                    Theme.invalidate()
+                }
+            } catch (e: Exception) { }
             finish(n, null)
         } catch (e: Exception) {
             finish(null, "Weather unavailable")

@@ -31,6 +31,19 @@ The home screen has **two pages**. Swipe sideways between them; the dots at the 
 
 - **Weather by the clock:** the current temperature and conditions, today's high and low, and your town. Tap it once to allow approximate location. After that, tapping refreshes the weather and opens your weather app (Samsung Weather, The Weather Channel or AccuWeather, all allowed under Everyday), and long-pressing opens Customize. Data comes from [Open-Meteo](https://open-meteo.com), which is free and needs no account. Only a location rounded to about 1 km is sent. In **Customize** you can pick a city instead of using your location, choose °F or °C, or hide the weather.
 - **🌐 Web pass:** in ⚙ Settings, start a pass to open browsers (Chrome, Samsung Internet and so on) for 30 minutes, twice a day, without the passcode. Links from other apps open during a pass too. Browsers close on their own when it ends, and the count resets at midnight. The home screen shows a banner while a pass is running, and you can end it early from Settings.
+- **Command bar:** the search box also takes commands. The top suggestion runs when you press **Go**, or tap any suggestion:
+  - `call mom` and `text sarah running late`, which need contacts access once. A number works too, like `call 555 1234`.
+  - `timer 10` (also `90s` or `1h`) and `alarm 7:30` (or `7am`).
+  - `due` or `agenda` opens the Agenda, and `weather` refreshes it.
+  - `?your question` or `ask …` sends a question to the Claude app.
+- **Theme** (Customize): **Dark**, **Paper** (warm cream with a serif font) or **Auto**, which is Paper from sunrise to sunset at your location and Dark at night.
+- **Japanese mode** (Customize): the date shows as 11月25日（水）, categories get Japanese names (学校, 音楽・本…), and the Agenda and labels switch to Japanese.
+- **Word of the day:** a word from your 毎日ノート vocabulary under the date, such as 経験（けいけん）· experience. It's read from the Japanese repo with the Updates token, with a built-in list until then. Tap it to open 毎日ノート.
+- **Garden:** one plant for each of the last 7 days. 🌷 means you stayed under your screen-time goal, 🥀 means you went over, and 🌱 is today. It also shows your streak. The goal (2–5 h, default 3 h) is set in Customize, and the garden needs usage tracking.
+- **Morning and evening cards:**
+  - **Morning (5 AM to noon):** weather, your first event and what's due today.
+  - **Evening (6 PM to midnight):** screen time and pickups, plus tomorrow's first event and anything due tomorrow.
+  - Tap a card for the Agenda, or **✕** to hide it until the next one.
 - **Search:** type in the search bar to find any allowed app. Matches replace the category list as you type, and **Go** on the keyboard opens the top match.
 - **Quiet notifications:** notifications from **food apps are always cleared**, even during an unlock. Notifications from blocked apps are cleared automatically too, so the notification shade only shows allowed apps. System notices like updates, battery and USB still show. Clearing blocked apps is paused during an unlock. Both use the same notification access as the count bubbles.
 - **Count bubbles** show only missed calls, voicemails and unread texts. They appear on the Phone and Messages apps and on their category. Turn this on once in the protection checklist.
@@ -123,6 +136,7 @@ The only way to close those gaps is Android's "device owner" kiosk mode. That ne
 | `ReorderList`, `ArrangeActivity` | Drag-and-drop ordering of categories and apps, moving apps between categories, and custom categories |
 | `Weather` | Home screen weather from Open-Meteo, cached for 30 minutes, using a rounded location or a chosen city |
 | `Pager`, `Dock`, `Agenda`, `CanvasSetupActivity` | Two-page home: swipe pager, most-used dock, and the calendar + Canvas agenda |
+| `Theme`, `Commands`, `Vocab`, `Garden`, `DayCard` | Day/night paper theme, command bar, word of the day, screen-time garden, morning/evening cards |
 | `Look`, `CustomizeActivity` | Home screen appearance settings and the wallpaper photo, which is stored only inside the app |
 | `UsageReport`, `BlockLog` | Screen time from Android's usage events, plus a 30-day local log of blocked attempts |
 

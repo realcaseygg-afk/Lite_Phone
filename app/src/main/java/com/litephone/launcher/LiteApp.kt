@@ -5,6 +5,7 @@ import android.app.Application
 class LiteApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        Theme.app = this
         Ui.ACCENT = Look.accent(this)
         // Texted unlock codes were removed; clear anything an earlier version saved.
         Prefs.get(this).edit()
