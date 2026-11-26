@@ -78,6 +78,10 @@ class AdminActivity : Activity() {
             chips(c, listOf("1" to "1 a day", "2" to "2 a day", "3" to "3 a day"), WebPass.perDay(this).toString()) {
                 WebPass.setPerDay(this, it.toInt())
             }
+            c.addView(Ui.text(this, "Play Store during a web pass", 14f, Ui.MUTED), Ui.lp(this, 10))
+            chips(c, listOf("on" to "Allowed", "off" to "Blocked"), if (WebPass.includesStore(this)) "on" else "off") {
+                WebPass.setIncludesStore(this, it == "on")
+            }
         }
 
         add("Change passcode", top = 28) { PinActivity.create(this) }

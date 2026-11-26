@@ -22,14 +22,15 @@ class OptionsActivity : Activity() {
         if (WebPass.enabled(this) && Prefs.isArmed(this)) {
             section("Web pass")
             if (WebPass.isActive(this)) {
-                c.addView(Ui.text(this, "Browsers are open until ${WebPass.endText(this)}.", 15f, Ui.ACCENT), Ui.lp(this, 4))
+                c.addView(Ui.text(this, (if (WebPass.includesStore(this)) "Browsers and the Play Store are open until " else "Browsers are open until ") + "${WebPass.endText(this)}.", 15f, Ui.ACCENT), Ui.lp(this, 4))
                 item("Open the browser", top = 8) { WebPass.browserIntent(this)?.let { startActivity(it) } }
                 item("End web pass now") { WebPass.end(this); recreate() }
             } else {
                 val left = WebPass.leftToday(this)
                 c.addView(Ui.text(
                     this,
-                    "Open the web for ${WebPass.minutes(this)} minutes. $left of ${WebPass.perDay(this)} left today.",
+                    "Open the web" + (if (WebPass.includesStore(this)) " and the Play Store" else "") +
+                        " for ${WebPass.minutes(this)} minutes. $left of ${WebPass.perDay(this)} left today.",
                     15f, Ui.MUTED
                 ), Ui.lp(this, 4))
                 if (left > 0) item("\uD83C\uDF10 Start web pass", top = 8) { confirmWebPass() }
@@ -60,7 +61,8 @@ class OptionsActivity : Activity() {
         android.app.AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
             .setTitle("Start a web pass?")
             .setMessage(
-                "Browsers open for ${WebPass.minutes(this)} minutes, then close on their own. " +
+                (if (WebPass.includesStore(this)) "Browsers and the Play Store" else "Browsers") +
+                    " open for ${WebPass.minutes(this)} minutes, then close on their own. " +
                     "This uses 1 of your $left left today."
             )
             .setPositiveButton("Start") { _, _ ->

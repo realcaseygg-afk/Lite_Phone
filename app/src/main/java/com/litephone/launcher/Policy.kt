@@ -439,7 +439,9 @@ object Policy {
         if (pkg in Prefs.allowedList(ctx)) return true
         if (pkg in systemHelpers(ctx)) return true
         if (pkg in INSTALLERS) return true
-        if (WebPass.isActive(ctx) && pkg in WebPass.browsers(ctx)) return true
+        if (WebPass.isActive(ctx) && (pkg in WebPass.browsers(ctx) ||
+                (pkg == WebPass.PLAY_STORE && WebPass.includesStore(ctx)))
+        ) return true
         // Samsung's own home app also draws the recent-apps screen and swipe-home
         // animations. While Lite Phone is the Home app, let those show; anything
         // opened from them is still checked. (Bouncing them caused black flashes.)

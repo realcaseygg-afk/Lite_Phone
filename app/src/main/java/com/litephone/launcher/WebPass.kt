@@ -35,6 +35,12 @@ object WebPass {
     fun perDay(ctx: Context) = Prefs.get(ctx).getInt(K_PER_DAY, 2)
     fun setPerDay(ctx: Context, n: Int) = Prefs.get(ctx).edit().putInt(K_PER_DAY, n).apply()
 
+    const val PLAY_STORE = "com.android.vending"
+
+    /** Whether the Play Store also opens during a web pass (passcode holder's choice). */
+    fun includesStore(ctx: Context) = Prefs.get(ctx).getBoolean("webpass_store", true)
+    fun setIncludesStore(ctx: Context, on: Boolean) = Prefs.get(ctx).edit().putBoolean("webpass_store", on).apply()
+
     private fun today() = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
 
     fun usedToday(ctx: Context): Int {
