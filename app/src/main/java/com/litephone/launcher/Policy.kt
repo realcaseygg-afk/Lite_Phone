@@ -206,7 +206,7 @@ object Policy {
         put("Notes & Tasks", NOTES_APPS)
         put("School", listOf(
             "com.instructure.candroid", "com.microsoft.teams", "us.zoom.videomeetings",
-            "com.google.android.apps.classroom", "com.quizlet.quizletandroid", "com.mainichinote.app",
+            "com.google.android.apps.classroom", "com.quizlet.quizletandroid", ZOTERO, "com.mainichinote.app",
         ) + FILES_APPS)
         put("Banking & Money", BANKING_APPS + listOf("com.samsung.android.spay", "com.google.android.apps.walletnfcrefapp"))
         put("Food", FOOD_APPS)
@@ -300,6 +300,9 @@ object Policy {
         "com.kunzisoft.keepass.libre",
     )
 
+    /** Zotero: research papers library and PDF reader. */
+    const val ZOTERO = "org.zotero.android"
+
     /** Visual voicemail: Samsung's and the carriers' apps. */
     val VOICEMAIL_APPS = listOf(
         "com.samsung.vvm",                              // Samsung Visual Voicemail
@@ -322,7 +325,7 @@ object Policy {
     )
 
     /** Bump when adding to the defaults; existing installs get the new apps once. */
-    const val DEFAULTS_VERSION = 15
+    const val DEFAULTS_VERSION = 16
     val ADDED_IN_VERSION = listOf(
         DefaultsUpdate(2, listOf(SETTINGS), inMoreApps = false),
         DefaultsUpdate(3, listOf("com.instructure.candroid", "com.duosecurity.duomobile"), inMoreApps = false),
@@ -340,6 +343,7 @@ object Policy {
         DefaultsUpdate(13, Weather.WEATHER_APPS, inMoreApps = false),
         DefaultsUpdate(14, MY_APPS, inMoreApps = false),
         DefaultsUpdate(15, VOICEMAIL_APPS, inMoreApps = false),
+        DefaultsUpdate(16, listOf(ZOTERO), inMoreApps = false),
     )
 
     class Suggestion(val pkg: String, val group: String, val why: String)
@@ -472,7 +476,7 @@ object Policy {
 
         return (pick(dialer, PHONE) + pick(sms, MESSAGES) + pick(camera, CAMERA) + NAMED_APPS + SETTINGS + FILES_APPS + EVERYDAY_APPS +
             BANKING_APPS + FOOD_APPS + SHOPPING_APPS + AUTHENTICATOR_APPS + NOTES_APPS + PASSWORD_MANAGERS +
-            Weather.WEATHER_APPS + VOICEMAIL_APPS).distinct()
+            Weather.WEATHER_APPS + VOICEMAIL_APPS + ZOTERO).distinct()
     }
 
     // Keyboards and the default phone app are always allowed. Cached briefly
