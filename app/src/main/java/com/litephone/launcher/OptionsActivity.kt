@@ -39,6 +39,7 @@ class OptionsActivity : Activity() {
         section("You")
         item("My use", top = 8) { open(UsageActivity::class.java) }
         item("Customize look") { open(CustomizeActivity::class.java) }
+        item("Dock apps") { open(DockSettingsActivity::class.java) }
         item(if (Agenda.canvasConnected(this)) "Canvas on the Agenda \u2713" else "Connect Canvas to the Agenda") {
             open(CanvasSetupActivity::class.java)
         }

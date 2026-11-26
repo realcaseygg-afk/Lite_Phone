@@ -157,9 +157,12 @@ class CustomizeActivity : Activity() {
             }
         }
 
+        c.addView(Ui.button(this, "Dock apps", Ui.SURFACE, Ui.ACCENT) {
+            startActivity(Intent(this, DockSettingsActivity::class.java))
+        }, Ui.lp(this, 32))
         c.addView(Ui.button(this, "Arrange apps", Ui.SURFACE, Ui.ACCENT) {
             startActivity(Intent(this, ArrangeActivity::class.java))
-        }, Ui.lp(this, 32))
+        }, Ui.lp(this, 12))
         c.addView(Ui.button(this, "Reset to default", Ui.SURFACE, Ui.MUTED) {
             AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle("Reset the look?")

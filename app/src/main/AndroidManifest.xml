@@ -75,6 +75,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".DockSettingsActivity"
+            android:excludeFromRecents="true"
+            android:exported="false" />
+        <activity
             android:name=".CustomizeActivity"
             android:excludeFromRecents="true"
             android:exported="false" />

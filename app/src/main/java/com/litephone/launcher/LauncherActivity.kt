@@ -509,7 +509,7 @@ class LauncherActivity : Activity() {
     /** The 4 most-used apps, above Settings. */
     private fun refreshDock() {
         dock.removeAllViews()
-        val apps = Dock.cached(this).ifEmpty { Policy.allowedEntries(this).take(4) }
+        val apps = Dock.apps(this)
         dock.visibility = if (apps.isEmpty()) View.GONE else View.VISIBLE
         val circle = Ui.dp(this, 56)
         val icon = Ui.dp(this, 34)
@@ -533,8 +533,9 @@ class LauncherActivity : Activity() {
                 }, Ui.lp(this@LauncherActivity, 5))
                 isClickable = true
                 setOnClickListener { launch(app.intent, app.label) }
+                // Long-press: choose the dock apps.
                 setOnLongClickListener {
-                    Toast.makeText(this@LauncherActivity, "Your most-used apps. They update from My use.", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@LauncherActivity, DockSettingsActivity::class.java))
                     true
                 }
             }
